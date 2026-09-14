@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -7,12 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Logly.Application\Logly.Application.csproj" />
-        <ProjectReference Include="..\Logly.Infrastructure\Logly.Infrastructure.csproj" />
+      <ProjectReference Include="..\Logly.Application\Logly.Application.csproj" />
+      <ProjectReference Include="..\Logly.Infrastructure\Logly.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     </ItemGroup>
 
 </Project>
