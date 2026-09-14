@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Logly.Api/Logly.Api.csproj" />
+  <Project Path="Logly.Application/Logly.Application.csproj" />
+  <Project Path="Logly.Domain/Logly.Domain.csproj" />
+  <Project Path="Logly.Infrastructure/Logly.Infrastructure.csproj" />
+  <Project Path="tests/Logly.Application.Tests/Logly.Application.Tests.csproj" />
+</Solution>
