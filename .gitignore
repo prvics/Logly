@@ -102,6 +102,7 @@ StyleCopReport.xml
 *.meta
 *.obj
 *.idb
+*.idea
 *.iobj
 *.pch
 *.pdb
