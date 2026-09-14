@@ -1,8 +1,12 @@
 ﻿using Logly.Infrastructure;
+using Logly.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<LoglyDbContext>("database");
 
 builder.Services.AddControllers();
 
@@ -20,10 +24,7 @@ app.MapGet("/", () => Results.Ok(new
     status = "Running"
 }));
 
-app.MapGet("/health", () => Results.Ok(new
-{
-    status = "Healthy"
-}));
+app.MapHealthChecks("/health");
 
 app.UseAuthorization();
 
