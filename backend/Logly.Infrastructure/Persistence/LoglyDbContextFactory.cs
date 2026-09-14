@@ -1,19 +1,32 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 
 namespace Logly.Infrastructure.Persistence;
 
-public class LoglyDbContextFactory : IDesignTimeDbContextFactory<LoglyDbContext>
+public sealed class LoglyDbContextFactory
+    : IDesignTimeDbContextFactory<LoglyDbContext>
 {
     public LoglyDbContext CreateDbContext(string[] args)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<LoglyDbContext>();
+        var configuration = new ConfigurationBuilder()
+            .AddUserSecrets(
+                Assembly.Load("Logly.Api"),
+                optional: false,
+                reloadOnChange: false)
+            .AddEnvironmentVariables()
+            .Build();
 
         var connectionString =
-            "Host=localhost;Port=5432;Database=logly;Username=postgres;Password=postgres";
+            configuration.GetConnectionString("LoglyDatabase")
+            ?? throw new InvalidOperationException(
+                "A ConnectionStrings:LoglyDatabase beállítás nem található.");
 
-        optionsBuilder.UseNpgsql(connectionString);
+        var options = new DbContextOptionsBuilder<LoglyDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
 
-        return new LoglyDbContext(optionsBuilder.Options);
+        return new LoglyDbContext(options);
     }
 }
