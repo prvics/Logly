@@ -1,8 +1,14 @@
 ﻿using Logly.Application.Auth.Repositories;
 using Logly.Application.Auth.Services;
+using Logly.Application.FuelFillUps.Repositories;
+using Logly.Application.FuelFillUps.Services;
+using Logly.Application.Vehicles.Repositories;
+using Logly.Application.Vehicles.Services;
 using Logly.Infrastructure.Auth;
+using Logly.Infrastructure.FuelFillUps;
 using Logly.Infrastructure.Persistence;
 using Logly.Infrastructure.Persistence.Repositories;
+using Logly.Infrastructure.Vehicles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,6 +33,10 @@ public static class DI
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IAuthService, AuthService>();
+        
+        services.AddScoped<IVehicleRepository, VehicleRepository>();
+        services.AddScoped<IVehicleService, VehicleService>();
+        
 
         return services;
     }
