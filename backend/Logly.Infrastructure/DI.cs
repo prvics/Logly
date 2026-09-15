@@ -1,4 +1,8 @@
-﻿using Logly.Infrastructure.Persistence;
+﻿using Logly.Application.Auth.Repositories;
+using Logly.Application.Auth.Services;
+using Logly.Infrastructure.Auth;
+using Logly.Infrastructure.Persistence;
+using Logly.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,16 +15,18 @@ public static class DI
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("LoglyDatabase");
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            throw new InvalidOperationException(
-                "Connection string 'LoglyDatabase' is not configured.");
-        }
+        var connectionString = configuration.GetConnectionString(
+                                   "LoglyDatabase")
+                               ?? throw new InvalidOperationException(
+                                   "Connection string 'LoglyDatabase' is not configured.");
 
         services.AddDbContext<LoglyDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<IAppUserRepository, AppUserRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
