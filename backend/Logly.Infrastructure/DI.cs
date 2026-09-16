@@ -1,5 +1,7 @@
 ﻿using Logly.Application.Auth.Repositories;
 using Logly.Application.Auth.Services;
+using Logly.Application.Expenses.Repositories;
+using Logly.Application.Expenses.Services;
 using Logly.Application.FuelFillUps.Repositories;
 using Logly.Application.FuelFillUps.Services;
 using Logly.Application.Shifts.Repositories;
@@ -7,6 +9,7 @@ using Logly.Application.Shifts.Services;
 using Logly.Application.Vehicles.Repositories;
 using Logly.Application.Vehicles.Services;
 using Logly.Infrastructure.Auth;
+using Logly.Infrastructure.Expenses;
 using Logly.Infrastructure.FuelFillUps;
 using Logly.Infrastructure.Persistence;
 using Logly.Infrastructure.Persistence.Repositories;
@@ -45,6 +48,9 @@ public static class DI
         
         services.AddScoped<IShiftRepository, ShiftRepository>();
         services.AddScoped<IShiftService, ShiftService>();
+        
+        services.AddScoped<IExpenseRepository, ExpenseRepository>();
+        services.AddScoped<IExpenseService, ExpenseService>();
 
         return services;
     }
