@@ -155,8 +155,8 @@ public sealed class DashboardEndpointsTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
-    
-        [Fact]
+
+    [Fact]
     public async Task GetTimeline_WithDashboardData_ReturnsCorrectItems()
     {
         await TestDataSeeder.SeedUserOneDashboardDataAsync(Factory);
@@ -206,8 +206,7 @@ public sealed class DashboardEndpointsTests
         Assert.NotNull(companies);
         Assert.NotEmpty(companies);
 
-        var userOneCompany = companies.FirstOrDefault(
-            c => c.UserCompanyId == TestData.UserOneCompanyId);
+        var userOneCompany = companies.FirstOrDefault(c => c.UserCompanyId == TestData.UserOneCompanyId);
 
         Assert.NotNull(userOneCompany);
         Assert.Equal(TestData.UserOneCompanyId, userOneCompany.UserCompanyId);
@@ -237,8 +236,7 @@ public sealed class DashboardEndpointsTests
         Assert.NotNull(vehicles);
         Assert.NotEmpty(vehicles);
 
-        var userOneVehicle = vehicles.FirstOrDefault(
-            v => v.VehicleId == TestData.UserOneVehicleId);
+        var userOneVehicle = vehicles.FirstOrDefault(v => v.VehicleId == TestData.UserOneVehicleId);
 
         Assert.NotNull(userOneVehicle);
         Assert.Equal(TestData.UserOneVehicleId, userOneVehicle.VehicleId);

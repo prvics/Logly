@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using FluentValidation;
+using Logly.Api.Validation;
 using Logly.Application.Shifts.DTOs;
 using Logly.Application.Shifts.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +14,17 @@ namespace Logly.Api.Controllers;
 public sealed class ShiftsController : ControllerBase
 {
     private readonly IShiftService _shiftService;
+    private readonly IValidator<CreateShiftRequest> _createShiftRequestValidator;
+    private readonly IValidator<UpdateShiftRequest> _updateShiftRequestValidator;
 
-    public ShiftsController(IShiftService shiftService)
+    public ShiftsController(
+        IShiftService shiftService,
+        IValidator<CreateShiftRequest> createShiftRequestValidator,
+        IValidator<UpdateShiftRequest> updateShiftRequestValidator)
     {
         _shiftService = shiftService;
+        _createShiftRequestValidator = createShiftRequestValidator;
+        _updateShiftRequestValidator = updateShiftRequestValidator;
     }
 
     [HttpGet]
@@ -88,7 +97,16 @@ public sealed class ShiftsController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        var validationResult = await _createShiftRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
 
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var shift = await _shiftService.CreateAsync(
             userId,
             request,
@@ -123,6 +141,15 @@ public sealed class ShiftsController : ControllerBase
         if (!TryGetCurrentUserId(out var userId))
         {
             return Unauthorized();
+        }
+        
+        var validationResult = await _updateShiftRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
         }
 
         var shift = await _shiftService.UpdateAsync(

@@ -38,7 +38,7 @@ public class ShiftConfiguration : IEntityTypeConfiguration<Shift>
             .HasDefaultValue(0m);
 
         builder.Property(shift => shift.Note)
-            .HasMaxLength(1000);
+            .HasMaxLength(500);
 
         builder.Property(shift => shift.CreatedAtUtc)
             .IsRequired();

@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using FluentValidation;
+using Logly.Api.Validation;
 using Logly.Application.Vehicles.DTOs;
 using Logly.Application.Vehicles.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +14,18 @@ namespace Logly.Api.Controllers;
 public sealed class VehiclesController : ControllerBase
 {
     private readonly IVehicleService _vehicleService;
+    private readonly IValidator<CreateVehicleRequest> _createVehicleRequestValidator;
 
-    public VehiclesController(IVehicleService vehicleService)
+    private readonly IValidator<UpdateVehicleRequest> _updateVehicleRequestValidator;
+
+    public VehiclesController(
+        IVehicleService vehicleService,
+        IValidator<CreateVehicleRequest> createVehicleRequestValidator,
+        IValidator<UpdateVehicleRequest> updateVehicleRequestValidator)
     {
         _vehicleService = vehicleService;
+        _createVehicleRequestValidator = createVehicleRequestValidator;
+        _updateVehicleRequestValidator = updateVehicleRequestValidator;
     }
 
     [HttpGet]
@@ -63,7 +73,16 @@ public sealed class VehiclesController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        var validationResult = await _createVehicleRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
 
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var vehicle = await _vehicleService.CreateAsync(
             userId,
             request,
@@ -96,6 +115,15 @@ public sealed class VehiclesController : ControllerBase
             return Unauthorized();
         }
 
+        var validationResult = await _updateVehicleRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var vehicle = await _vehicleService.UpdateAsync(
             userId,
             id,

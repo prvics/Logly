@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using FluentValidation;
+using Logly.Api.Validation;
 using Logly.Application.Expenses.DTOs;
 using Logly.Application.Expenses.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +14,17 @@ namespace Logly.Api.Controllers;
 public sealed class ExpensesController : ControllerBase
 {
     private readonly IExpenseService _expenseService;
+    private readonly IValidator<CreateExpenseRequest> _createExpenseRequestValidator;
+    private readonly IValidator<UpdateExpenseRequest> _updateExpenseRequestValidator;
 
-    public ExpensesController(IExpenseService expenseService)
+    public ExpensesController(
+        IExpenseService expenseService,
+        IValidator<CreateExpenseRequest> createExpenseRequestValidator,
+        IValidator<UpdateExpenseRequest> updateExpenseRequestValidator)
     {
         _expenseService = expenseService;
+        _createExpenseRequestValidator = createExpenseRequestValidator;
+        _updateExpenseRequestValidator = updateExpenseRequestValidator;
     }
 
     [HttpGet]
@@ -63,6 +72,15 @@ public sealed class ExpensesController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        var validationResult = await _createExpenseRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
 
         var result = await _expenseService.CreateAsync(
             userId,
@@ -91,6 +109,15 @@ public sealed class ExpensesController : ControllerBase
             return Unauthorized();
         }
 
+        var validationResult = await _updateExpenseRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var result = await _expenseService.UpdateAsync(
             userId,
             id,

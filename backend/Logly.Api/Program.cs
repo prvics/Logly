@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using FluentValidation;
+using Logly.Application.Auth.Validators;
 using Logly.Infrastructure;
 using Logly.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,6 +10,9 @@ using Microsoft.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddValidatorsFromAssemblyContaining<
+    LoginRequestValidator>();
 
 var jwtSigningKey = builder.Configuration["Jwt:SigningKey"]
     ?? throw new InvalidOperationException(

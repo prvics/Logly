@@ -23,7 +23,7 @@ public class IncomeConfiguration : IEntityTypeConfiguration<Income>
             .IsRequired();
 
         builder.Property(income => income.Note)
-            .HasMaxLength(1000);
+            .HasMaxLength(500);
 
         builder.Property(income => income.CreatedAtUtc)
             .IsRequired();

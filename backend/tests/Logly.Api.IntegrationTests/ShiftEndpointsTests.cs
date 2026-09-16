@@ -122,14 +122,14 @@ public sealed class ShiftEndpointsTests
             Note = "Integration test shift"
         };
     }
-    
-        [Fact]
+
+    [Fact]
     public async Task UpdateShift_WithValidRequest_ReturnsOk()
     {
         await TestDataSeeder.SeedUserOneDashboardDataAsync(Factory);
 
         AuthenticateAs(TestData.UserOneId);
-        
+
         var createRequest = new CreateShiftRequest
         {
             UserCompanyId = TestData.UserOneCompanyId,
@@ -154,11 +154,11 @@ public sealed class ShiftEndpointsTests
             .ReadFromJsonAsync<ShiftResponse>();
 
         Assert.NotNull(created);
-        
+
         var updateRequest = new UpdateShiftRequest
         {
-            UserCompanyId = TestData.UserOneCompanyId,  // <-- KELL!
-            VehicleId = TestData.UserOneVehicleId,      // <-- KELL!
+            UserCompanyId = TestData.UserOneCompanyId, // <-- KELL!
+            VehicleId = TestData.UserOneVehicleId, // <-- KELL!
             Date = new DateOnly(2026, 9, 16),
             WorkedHours = 10,
             WorkedMinutes = 0,
@@ -211,7 +211,7 @@ public sealed class ShiftEndpointsTests
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
-    
+
     [Fact]
     public async Task DeleteShift_WithValidRequest_ReturnsNoContent()
     {

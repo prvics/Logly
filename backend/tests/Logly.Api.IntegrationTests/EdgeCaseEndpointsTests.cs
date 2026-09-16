@@ -135,7 +135,7 @@ public sealed class EdgeCaseEndpointsTests
             UserCompanyId = TestData.UserOneCompanyId,
             VehicleId = TestData.UserOneVehicleId,
             Date = new DateOnly(2026, 9, 16),
-            WorkedHours = 25,  // Invalid!
+            WorkedHours = 25, // Invalid!
             WorkedMinutes = 0,
             DrivenKilometers = 100m,
             Revenue = 10_000m,
@@ -161,7 +161,7 @@ public sealed class EdgeCaseEndpointsTests
             VehicleId = TestData.UserOneVehicleId,
             Date = new DateOnly(2026, 9, 16),
             WorkedHours = 8,
-            WorkedMinutes = 60,  // Invalid!
+            WorkedMinutes = 60, // Invalid!
             DrivenKilometers = 100m,
             Revenue = 10_000m,
             DeliveredOrders = 10,
@@ -189,7 +189,7 @@ public sealed class EdgeCaseEndpointsTests
             VehicleId = TestData.UserOneVehicleId,
             UserCompanyId = TestData.UserOneCompanyId,
             Date = new DateOnly(2026, 9, 16),
-            Amount = 0m,  // Invalid!
+            Amount = 0m, // Invalid!
             Category = ExpenseCategory.Parking,
             IsWorkRelated = true,
             Note = "Zero amount"
@@ -211,7 +211,7 @@ public sealed class EdgeCaseEndpointsTests
             VehicleId = TestData.UserOneVehicleId,
             UserCompanyId = TestData.UserOneCompanyId,
             Date = new DateOnly(2026, 9, 16),
-            Amount = -100m,  // Invalid!
+            Amount = -100m, // Invalid!
             Category = ExpenseCategory.Parking,
             IsWorkRelated = true,
             Note = "Negative amount"
@@ -237,7 +237,7 @@ public sealed class EdgeCaseEndpointsTests
             VehicleId = TestData.UserOneVehicleId,
             Date = new DateOnly(2026, 9, 16),
             OdometerKm = 100_000m,
-            Liters = 0m,  // Invalid!
+            Liters = 0m, // Invalid!
             TotalPrice = 0m,
             IsFullTank = false,
             Note = "Zero liters"
@@ -260,7 +260,7 @@ public sealed class EdgeCaseEndpointsTests
             Date = new DateOnly(2026, 9, 16),
             OdometerKm = 100_000m,
             Liters = 40m,
-            TotalPrice = -1000m,  // Invalid!
+            TotalPrice = -1000m, // Invalid!
             IsFullTank = true,
             Note = "Negative price"
         };
@@ -288,7 +288,7 @@ public sealed class EdgeCaseEndpointsTests
             Amount = 1000m,
             Category = ExpenseCategory.Parking,
             IsWorkRelated = true,
-            Note = new string('A', 1001)  // > 1000 chars!
+            Note = new string('A', 501) // > 500 chars!
         };
 
         var response = await Client.PostAsJsonAsync("/api/expenses", request);
@@ -310,7 +310,7 @@ public sealed class EdgeCaseEndpointsTests
             Amount = 1000m,
             Category = ExpenseCategory.Parking,
             IsWorkRelated = true,
-            Note = new string('A', 1000)  // Exactly 1000 chars
+            Note = new string('A', 500)
         };
 
         var response = await Client.PostAsJsonAsync("/api/expenses", request);
@@ -330,7 +330,7 @@ public sealed class EdgeCaseEndpointsTests
 
         var request = new CreateExpenseRequest
         {
-            VehicleId = Guid.Empty,  // Invalid!
+            VehicleId = Guid.Empty, // Invalid!
             UserCompanyId = TestData.UserOneCompanyId,
             Date = new DateOnly(2026, 9, 16),
             Amount = 1000m,
@@ -352,7 +352,7 @@ public sealed class EdgeCaseEndpointsTests
 
         var request = new CreateShiftRequest
         {
-            UserCompanyId = Guid.Empty,  // Invalid!
+            UserCompanyId = Guid.Empty, // Invalid!
             VehicleId = TestData.UserOneVehicleId,
             Date = new DateOnly(2026, 9, 16),
             WorkedHours = 8,

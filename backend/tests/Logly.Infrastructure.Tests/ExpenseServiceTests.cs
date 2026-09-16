@@ -306,7 +306,7 @@ public sealed class ExpenseServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_WithNoteLongerThan1000Characters_ReturnsValidationFailed()
+    public async Task CreateAsync_WithNoteLongerThan500Characters_ReturnsValidationFailed()
     {
         var request = new CreateExpenseRequest
         {

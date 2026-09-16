@@ -110,7 +110,7 @@ namespace Logly.Infrastructure.Migrations
                     Amount = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
                     Category = table.Column<int>(type: "integer", nullable: false),
                     IsWorkRelated = table.Column<bool>(type: "boolean", nullable: false),
-                    Note = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Note = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -149,7 +149,7 @@ namespace Logly.Infrastructure.Migrations
                     Liters = table.Column<decimal>(type: "numeric(8,3)", precision: 8, scale: 3, nullable: false),
                     TotalPrice = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
                     IsFullTank = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    Note = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Note = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -184,7 +184,7 @@ namespace Logly.Infrastructure.Migrations
                     Revenue = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
                     DeliveredOrders = table.Column<int>(type: "integer", nullable: false),
                     WorkExpense = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false, defaultValue: 0m),
-                    Note = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    Note = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },

@@ -218,9 +218,9 @@ public sealed class ExpenseService : IExpenseService
             return "Érvénytelen kiadási kategória.";
         }
 
-        if (note is not null && note.Length > 1000)
+        if (note is not null && note.Length > 500)
         {
-            return "A megjegyzés maximum 1000 karakter lehet.";
+            return "A megjegyzés maximum 500 karakter lehet.";
         }
 
         return null;

@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using FluentValidation;
+using Logly.Api.Validation;
 using Logly.Application.FuelFillUps.DTOs;
 using Logly.Application.FuelFillUps.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,10 +14,18 @@ namespace Logly.Api.Controllers;
 public sealed class FuelFillUpsController : ControllerBase
 {
     private readonly IFuelFillUpService _fuelFillUpService;
+    private readonly IValidator<CreateFuelFillUpRequest> _createFuelFillUpRequestValidator;
 
-    public FuelFillUpsController(IFuelFillUpService fuelFillUpService)
+    private readonly IValidator<UpdateFuelFillUpRequest> _updateFuelFillUpRequestValidator;
+
+    public FuelFillUpsController(
+        IFuelFillUpService fuelFillUpService,
+        IValidator<CreateFuelFillUpRequest> createFuelFillUpRequestValidator,
+        IValidator<UpdateFuelFillUpRequest> updateFuelFillUpRequestValidator)
     {
         _fuelFillUpService = fuelFillUpService;
+        _createFuelFillUpRequestValidator = createFuelFillUpRequestValidator;
+        _updateFuelFillUpRequestValidator = updateFuelFillUpRequestValidator;
     }
 
     [HttpGet]
@@ -63,7 +73,16 @@ public sealed class FuelFillUpsController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        var validationResult = await _createFuelFillUpRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
 
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var fuelFillUp = await _fuelFillUpService.CreateAsync(
             userId,
             request,
@@ -96,7 +115,16 @@ public sealed class FuelFillUpsController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        var validationResult = await _updateFuelFillUpRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
 
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var fuelFillUp = await _fuelFillUpService.UpdateAsync(
             userId,
             id,

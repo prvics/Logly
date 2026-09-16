@@ -221,7 +221,7 @@ public sealed class ShiftService : IShiftService
                request.Revenue is >= 0 and <= 9_999_999.99m &&
                request.DeliveredOrders >= 0 &&
                request.WorkExpense is >= 0 and <= 9_999_999.99m &&
-               (request.Note is null || request.Note.Length <= 1000);
+               (request.Note is null || request.Note.Length <= 500);
     }
 
     private static bool IsRequestValid(UpdateShiftRequest request)
@@ -234,7 +234,7 @@ public sealed class ShiftService : IShiftService
                request.Revenue is >= 0 and <= 9_999_999.99m &&
                request.DeliveredOrders >= 0 &&
                request.WorkExpense is >= 0 and <= 9_999_999.99m &&
-               (request.Note is null || request.Note.Length <= 1000);
+               (request.Note is null || request.Note.Length <= 500);
     }
 
     private static ShiftResponse MapToResponse(Shift shift)

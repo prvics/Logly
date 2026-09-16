@@ -32,7 +32,7 @@ public class FuelFillUpConfiguration : IEntityTypeConfiguration<FuelFillUp>
             .HasDefaultValue(false);
 
         builder.Property(fuelFillUp => fuelFillUp.Note)
-            .HasMaxLength(1000);
+            .HasMaxLength(500);
 
         builder.Property(fuelFillUp => fuelFillUp.CreatedAtUtc)
             .IsRequired();

@@ -6,5 +6,5 @@ public sealed class RegisterRequest
 
     public string Password { get; init; } = string.Empty;
 
-    public string? DisplayName { get; init; }
+    public string DisplayName { get; init; } = string.Empty;
 }

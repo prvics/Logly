@@ -26,7 +26,7 @@ public class ExpenseConfiguration : IEntityTypeConfiguration<Expense>
             .IsRequired();
 
         builder.Property(expense => expense.Note)
-            .HasMaxLength(1000);
+            .HasMaxLength(500);
 
         builder.Property(expense => expense.CreatedAtUtc)
             .IsRequired();

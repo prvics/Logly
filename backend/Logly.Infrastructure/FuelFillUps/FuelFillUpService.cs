@@ -157,7 +157,7 @@ public sealed class FuelFillUpService : IFuelFillUpService
                odometerKm is >= 0 and <= 9_999_999_999.9m &&
                liters is > 0 and <= 99_999.999m &&
                totalPrice is >= 0 and <= 9_999_999.99m &&
-               (note is null || note.Length <= 1000);
+               (note is null || note.Length <= 500);
     }
 
     private static FuelFillUpResponse MapToResponse(

@@ -124,8 +124,8 @@ public sealed class ExpenseEndpointsTests
             1_000m,
             expenses[0].Amount);
     }
-    
-        [Fact]
+
+    [Fact]
     public async Task UpdateExpense_WithValidRequest_ReturnsOk()
     {
         await TestDataSeeder.SeedUserOneDashboardDataAsync(Factory);
@@ -134,6 +134,7 @@ public sealed class ExpenseEndpointsTests
 
         var updateRequest = new UpdateExpenseRequest
         {
+            Date = new DateOnly(2026, 9, 16),
             Amount = 3_500m,
             Category = ExpenseCategory.Equipment,
             IsWorkRelated = false,
@@ -167,6 +168,7 @@ public sealed class ExpenseEndpointsTests
 
         var updateRequest = new UpdateExpenseRequest
         {
+            Date = new DateOnly(2026, 9, 16),
             Amount = 9_999m,
             Category = ExpenseCategory.Parking,
             IsWorkRelated = true,

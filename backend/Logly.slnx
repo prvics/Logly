@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/tests/">
     <Project Path="tests/Logly.Api.IntegrationTests/Logly.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Logly.Application.Tests/Logly.Application.Tests.csproj" />
     <Project Path="tests/Logly.Domain.Tests/Logly.Domain.Tests.csproj" />
     <Project Path="tests/Logly.Infrastructure.Tests/Logly.Infrastructure.Tests.csproj" />
   </Folder>

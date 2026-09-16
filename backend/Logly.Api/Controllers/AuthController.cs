@@ -1,4 +1,6 @@
 ﻿using System.Security.Claims;
+using FluentValidation;
+using Logly.Api.Validation;
 using Logly.Application.Auth.DTOs;
 using Logly.Application.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,10 +13,17 @@ namespace Logly.Api.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IValidator<LoginRequest> _loginRequestValidator;
+    private readonly IValidator<RegisterRequest> _registerRequestValidator;
 
-    public AuthController(IAuthService authService)
+    public AuthController(
+        IAuthService authService,
+        IValidator<LoginRequest> loginRequestValidator,
+        IValidator<RegisterRequest> registerRequestValidator)
     {
         _authService = authService;
+        _loginRequestValidator = loginRequestValidator;
+        _registerRequestValidator = registerRequestValidator;
     }
 
     [HttpPost("register")]
@@ -23,6 +32,15 @@ public sealed class AuthController : ControllerBase
         RegisterRequest request,
         CancellationToken cancellationToken)
     {
+        var validationResult = await _registerRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var response = await _authService.RegisterAsync(
             request,
             cancellationToken);
@@ -47,6 +65,15 @@ public sealed class AuthController : ControllerBase
         LoginRequest request,
         CancellationToken cancellationToken)
     {
+        var validationResult = await _loginRequestValidator.ValidateAsync(
+            request,
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            return validationResult.ToBadRequest();
+        }
+        
         var response = await _authService.LoginAsync(
             request,
             cancellationToken);

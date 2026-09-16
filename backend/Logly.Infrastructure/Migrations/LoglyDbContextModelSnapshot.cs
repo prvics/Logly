@@ -114,8 +114,8 @@ namespace Logly.Infrastructure.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -162,8 +162,8 @@ namespace Logly.Infrastructure.Migrations
                         .HasColumnType("numeric(8,3)");
 
                     b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("OdometerKm")
                         .HasPrecision(12, 1)
@@ -211,8 +211,8 @@ namespace Logly.Infrastructure.Migrations
                         .HasColumnType("date");
 
                     b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<Guid?>("ShiftId")
                         .HasColumnType("uuid");
@@ -257,8 +257,8 @@ namespace Logly.Infrastructure.Migrations
                         .HasColumnType("numeric(10,1)");
 
                     b.Property<string>("Note")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("Revenue")
                         .HasPrecision(12, 2)
