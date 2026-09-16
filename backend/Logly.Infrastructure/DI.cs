@@ -2,12 +2,15 @@
 using Logly.Application.Auth.Services;
 using Logly.Application.FuelFillUps.Repositories;
 using Logly.Application.FuelFillUps.Services;
+using Logly.Application.Shifts.Repositories;
+using Logly.Application.Shifts.Services;
 using Logly.Application.Vehicles.Repositories;
 using Logly.Application.Vehicles.Services;
 using Logly.Infrastructure.Auth;
 using Logly.Infrastructure.FuelFillUps;
 using Logly.Infrastructure.Persistence;
 using Logly.Infrastructure.Persistence.Repositories;
+using Logly.Infrastructure.Shifts;
 using Logly.Infrastructure.Vehicles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -37,6 +40,11 @@ public static class DI
         services.AddScoped<IVehicleRepository, VehicleRepository>();
         services.AddScoped<IVehicleService, VehicleService>();
         
+        services.AddScoped<IFuelFillUpRepository, FuelFillUpRepository>();
+        services.AddScoped<IFuelFillUpService, FuelFillUpService>();
+        
+        services.AddScoped<IShiftRepository, ShiftRepository>();
+        services.AddScoped<IShiftService, ShiftService>();
 
         return services;
     }
