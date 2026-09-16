@@ -23,6 +23,8 @@ public class LoglyDbContext : DbContext
     public DbSet<Expense> Expenses => Set<Expense>();
 
     public DbSet<FuelFillUp> FuelFillUps => Set<FuelFillUp>();
+    
+    public DbSet<Income> Incomes => Set<Income>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -191,6 +191,52 @@ namespace Logly.Infrastructure.Migrations
                     b.ToTable("FuelFillUps", (string)null);
                 });
 
+            modelBuilder.Entity("Logly.Domain.Entities.Income", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("ShiftId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UserCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("UserCompanyId");
+
+                    b.HasIndex("UserId", "Date");
+
+                    b.ToTable("Incomes", (string)null);
+                });
+
             modelBuilder.Entity("Logly.Domain.Entities.Shift", b =>
                 {
                     b.Property<Guid>("Id")
@@ -374,6 +420,31 @@ namespace Logly.Infrastructure.Migrations
                     b.Navigation("Vehicle");
                 });
 
+            modelBuilder.Entity("Logly.Domain.Entities.Income", b =>
+                {
+                    b.HasOne("Logly.Domain.Entities.Shift", "Shift")
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Logly.Domain.Entities.UserCompany", "UserCompany")
+                        .WithMany()
+                        .HasForeignKey("UserCompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Logly.Domain.Entities.AppUser", "User")
+                        .WithMany("Incomes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shift");
+
+                    b.Navigation("User");
+
+                    b.Navigation("UserCompany");
+                });
+
             modelBuilder.Entity("Logly.Domain.Entities.Shift", b =>
                 {
                     b.HasOne("Logly.Domain.Entities.UserCompany", "UserCompany")
@@ -428,6 +499,8 @@ namespace Logly.Infrastructure.Migrations
                     b.Navigation("Expenses");
 
                     b.Navigation("FuelFillUps");
+
+                    b.Navigation("Incomes");
 
                     b.Navigation("UserCompanies");
 
