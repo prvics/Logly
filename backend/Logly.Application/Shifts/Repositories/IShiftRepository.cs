@@ -13,6 +13,16 @@ public interface IShiftRepository
         Guid userCompanyId,
         CancellationToken cancellationToken);
 
+    Task<bool> UserCompanyBelongsToUserAsync(
+        Guid userCompanyId,
+        Guid userId,
+        CancellationToken cancellationToken);
+
+    Task<bool> VehicleBelongsToUserAsync(
+        Guid vehicleId,
+        Guid userId,
+        CancellationToken cancellationToken);
+
     Task AddAsync(
         Shift shift,
         CancellationToken cancellationToken);

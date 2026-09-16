@@ -21,6 +21,7 @@ public sealed class ShiftRepository : IShiftRepository
             .AsNoTracking()
             .Where(shift => shift.UserCompanyId == userCompanyId)
             .OrderByDescending(shift => shift.Date)
+            .ThenByDescending(shift => shift.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }
 
@@ -34,6 +35,35 @@ public sealed class ShiftRepository : IShiftRepository
                 shift =>
                     shift.Id == shiftId &&
                     shift.UserCompanyId == userCompanyId,
+                cancellationToken);
+    }
+
+    public Task<bool> UserCompanyBelongsToUserAsync(
+        Guid userCompanyId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.UserCompanies
+            .AsNoTracking()
+            .AnyAsync(
+                userCompany =>
+                    userCompany.Id == userCompanyId &&
+                    userCompany.UserId == userId &&
+                    userCompany.IsActive,
+                cancellationToken);
+    }
+
+    public Task<bool> VehicleBelongsToUserAsync(
+        Guid vehicleId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.Vehicles
+            .AsNoTracking()
+            .AnyAsync(
+                vehicle =>
+                    vehicle.Id == vehicleId &&
+                    vehicle.UserId == userId,
                 cancellationToken);
     }
 

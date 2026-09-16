@@ -36,9 +36,15 @@ public sealed class ShiftsController : ControllerBase
             });
         }
 
-        var shifts = await _shiftService.GetAllByUserCompanyAsync(
+        var shifts = await _shiftService.GetAllAsync(
+            userId,
             userCompanyId,
             cancellationToken);
+
+        if (shifts is null)
+        {
+            return NotFound();
+        }
 
         return Ok(shifts);
     }
@@ -63,6 +69,7 @@ public sealed class ShiftsController : ControllerBase
         }
 
         var shift = await _shiftService.GetByIdAsync(
+            userId,
             userCompanyId,
             id,
             cancellationToken);
@@ -92,14 +99,18 @@ public sealed class ShiftsController : ControllerBase
             return BadRequest(new
             {
                 message =
-                    "Érvénytelen műszakadatok. " +
-                    "Ellenőrizd a mezőket."
+                    "Érvénytelen műszakadatok, vagy a kiválasztott " +
+                    "futárcég kapcsolat/jármű nem a felhasználóhoz tartozik."
             });
         }
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = shift.Id, userCompanyId = shift.UserCompanyId },
+            new
+            {
+                id = shift.Id,
+                userCompanyId = shift.UserCompanyId
+            },
             shift);
     }
 
@@ -114,16 +125,8 @@ public sealed class ShiftsController : ControllerBase
             return Unauthorized();
         }
 
-        if (request.UserCompanyId == Guid.Empty)
-        {
-            return BadRequest(new
-            {
-                message = "A userCompanyId megadása kötelező."
-            });
-        }
-
         var shift = await _shiftService.UpdateAsync(
-            request.UserCompanyId,
+            userId,
             id,
             request,
             cancellationToken);
@@ -133,7 +136,9 @@ public sealed class ShiftsController : ControllerBase
             return NotFound(new
             {
                 message =
-                    "A műszak nem található, vagy nem módosítható."
+                    "A műszak nem található, az adatok érvénytelenek, " +
+                    "vagy a kiválasztott futárcég kapcsolat/jármű " +
+                    "nem a felhasználóhoz tartozik."
             });
         }
 
@@ -160,11 +165,17 @@ public sealed class ShiftsController : ControllerBase
         }
 
         var wasDeleted = await _shiftService.DeleteAsync(
+            userId,
             userCompanyId,
             id,
             cancellationToken);
 
-        return wasDeleted
+        if (wasDeleted is null)
+        {
+            return NotFound();
+        }
+
+        return wasDeleted.Value
             ? NoContent()
             : NotFound();
     }

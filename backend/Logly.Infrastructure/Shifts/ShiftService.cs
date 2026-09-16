@@ -14,10 +14,22 @@ public sealed class ShiftService : IShiftService
         _shiftRepository = shiftRepository;
     }
 
-    public async Task<IReadOnlyList<ShiftResponse>> GetAllByUserCompanyAsync(
+    public async Task<IReadOnlyList<ShiftResponse>?> GetAllAsync(
+        Guid userId,
         Guid userCompanyId,
         CancellationToken cancellationToken)
     {
+        var userCompanyOwned =
+            await _shiftRepository.UserCompanyBelongsToUserAsync(
+                userCompanyId,
+                userId,
+                cancellationToken);
+
+        if (!userCompanyOwned)
+        {
+            return null;
+        }
+
         var shifts = await _shiftRepository.GetAllByUserCompanyIdAsync(
             userCompanyId,
             cancellationToken);
@@ -28,10 +40,22 @@ public sealed class ShiftService : IShiftService
     }
 
     public async Task<ShiftResponse?> GetByIdAsync(
+        Guid userId,
         Guid userCompanyId,
         Guid shiftId,
         CancellationToken cancellationToken)
     {
+        var userCompanyOwned =
+            await _shiftRepository.UserCompanyBelongsToUserAsync(
+                userCompanyId,
+                userId,
+                cancellationToken);
+
+        if (!userCompanyOwned)
+        {
+            return null;
+        }
+
         var shift = await _shiftRepository.GetByIdAndUserCompanyIdAsync(
             shiftId,
             userCompanyId,
@@ -43,47 +67,33 @@ public sealed class ShiftService : IShiftService
     }
 
     public async Task<ShiftResponse?> CreateAsync(
-        Guid userCompanyId,
+        Guid userId,
         CreateShiftRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.UserCompanyId == Guid.Empty ||
-            request.VehicleId == Guid.Empty)
+        if (!IsRequestValid(request))
         {
             return null;
         }
 
-        if (request.WorkedHours is < 0 or > 24)
+        var userCompanyOwned =
+            await _shiftRepository.UserCompanyBelongsToUserAsync(
+                request.UserCompanyId,
+                userId,
+                cancellationToken);
+
+        if (!userCompanyOwned)
         {
             return null;
         }
 
-        if (request.WorkedMinutes is < 0 or > 59)
-        {
-            return null;
-        }
+        var vehicleOwned =
+            await _shiftRepository.VehicleBelongsToUserAsync(
+                request.VehicleId,
+                userId,
+                cancellationToken);
 
-        if (request.DrivenKilometers is < 0 or > 999_999.9m)
-        {
-            return null;
-        }
-
-        if (request.Revenue is < 0 or > 9_999_999.99m)
-        {
-            return null;
-        }
-
-        if (request.DeliveredOrders is < 0)
-        {
-            return null;
-        }
-
-        if (request.WorkExpense is < 0 or > 9_999_999.99m)
-        {
-            return null;
-        }
-
-        if (request.Note is not null && request.Note.Length > 1000)
+        if (!vehicleOwned)
         {
             return null;
         }
@@ -109,55 +119,41 @@ public sealed class ShiftService : IShiftService
     }
 
     public async Task<ShiftResponse?> UpdateAsync(
-        Guid userCompanyId,
+        Guid userId,
         Guid shiftId,
         UpdateShiftRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.UserCompanyId == Guid.Empty ||
-            request.VehicleId == Guid.Empty)
+        if (!IsRequestValid(request))
         {
             return null;
         }
 
-        if (request.WorkedHours is < 0 or > 24)
+        var userCompanyOwned =
+            await _shiftRepository.UserCompanyBelongsToUserAsync(
+                request.UserCompanyId,
+                userId,
+                cancellationToken);
+
+        if (!userCompanyOwned)
         {
             return null;
         }
 
-        if (request.WorkedMinutes is < 0 or > 59)
-        {
-            return null;
-        }
+        var vehicleOwned =
+            await _shiftRepository.VehicleBelongsToUserAsync(
+                request.VehicleId,
+                userId,
+                cancellationToken);
 
-        if (request.DrivenKilometers is < 0 or > 999_999.9m)
-        {
-            return null;
-        }
-
-        if (request.Revenue is < 0 or > 9_999_999.99m)
-        {
-            return null;
-        }
-
-        if (request.DeliveredOrders is < 0)
-        {
-            return null;
-        }
-
-        if (request.WorkExpense is < 0 or > 9_999_999.99m)
-        {
-            return null;
-        }
-
-        if (request.Note is not null && request.Note.Length > 1000)
+        if (!vehicleOwned)
         {
             return null;
         }
 
         var shift = await _shiftRepository.GetByIdAndUserCompanyIdAsync(
             shiftId,
-            userCompanyId,
+            request.UserCompanyId,
             cancellationToken);
 
         if (shift is null)
@@ -182,11 +178,23 @@ public sealed class ShiftService : IShiftService
         return MapToResponse(shift);
     }
 
-    public async Task<bool> DeleteAsync(
+    public async Task<bool?> DeleteAsync(
+        Guid userId,
         Guid userCompanyId,
         Guid shiftId,
         CancellationToken cancellationToken)
     {
+        var userCompanyOwned =
+            await _shiftRepository.UserCompanyBelongsToUserAsync(
+                userCompanyId,
+                userId,
+                cancellationToken);
+
+        if (!userCompanyOwned)
+        {
+            return null;
+        }
+
         var shift = await _shiftRepository.GetByIdAndUserCompanyIdAsync(
             shiftId,
             userCompanyId,
@@ -201,6 +209,32 @@ public sealed class ShiftService : IShiftService
         await _shiftRepository.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    private static bool IsRequestValid(CreateShiftRequest request)
+    {
+        return request.UserCompanyId != Guid.Empty &&
+               request.VehicleId != Guid.Empty &&
+               request.WorkedHours is >= 0 and <= 24 &&
+               request.WorkedMinutes is >= 0 and <= 59 &&
+               request.DrivenKilometers is >= 0 and <= 999_999.9m &&
+               request.Revenue is >= 0 and <= 9_999_999.99m &&
+               request.DeliveredOrders >= 0 &&
+               request.WorkExpense is >= 0 and <= 9_999_999.99m &&
+               (request.Note is null || request.Note.Length <= 1000);
+    }
+
+    private static bool IsRequestValid(UpdateShiftRequest request)
+    {
+        return request.UserCompanyId != Guid.Empty &&
+               request.VehicleId != Guid.Empty &&
+               request.WorkedHours is >= 0 and <= 24 &&
+               request.WorkedMinutes is >= 0 and <= 59 &&
+               request.DrivenKilometers is >= 0 and <= 999_999.9m &&
+               request.Revenue is >= 0 and <= 9_999_999.99m &&
+               request.DeliveredOrders >= 0 &&
+               request.WorkExpense is >= 0 and <= 9_999_999.99m &&
+               (request.Note is null || request.Note.Length <= 1000);
     }
 
     private static ShiftResponse MapToResponse(Shift shift)
