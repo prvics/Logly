@@ -13,6 +13,11 @@ public interface IFuelFillUpRepository
         Guid userId,
         CancellationToken cancellationToken);
 
+    Task<bool> VehicleBelongsToUserAsync(
+        Guid vehicleId,
+        Guid userId,
+        CancellationToken cancellationToken);
+
     Task AddAsync(
         FuelFillUp fuelFillUp,
         CancellationToken cancellationToken);

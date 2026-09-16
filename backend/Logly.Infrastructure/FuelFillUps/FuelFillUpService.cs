@@ -47,27 +47,23 @@ public sealed class FuelFillUpService : IFuelFillUpService
         CreateFuelFillUpRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.VehicleId == Guid.Empty)
+        if (!IsRequestValid(
+                request.VehicleId,
+                request.OdometerKm,
+                request.Liters,
+                request.TotalPrice,
+                request.Note))
         {
             return null;
         }
 
-        if (request.OdometerKm is < 0 or > 9_999_999_999.9m)
-        {
-            return null;
-        }
+        var vehicleOwned =
+            await _fuelFillUpRepository.VehicleBelongsToUserAsync(
+                request.VehicleId,
+                userId,
+                cancellationToken);
 
-        if (request.Liters is <= 0 or > 99_999.999m)
-        {
-            return null;
-        }
-
-        if (request.TotalPrice is < 0 or > 9_999_999.99m)
-        {
-            return null;
-        }
-
-        if (request.Note is not null && request.Note.Length > 1000)
+        if (!vehicleOwned)
         {
             return null;
         }
@@ -96,22 +92,12 @@ public sealed class FuelFillUpService : IFuelFillUpService
         UpdateFuelFillUpRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.OdometerKm is < 0 or > 9_999_999_999.9m)
-        {
-            return null;
-        }
-
-        if (request.Liters is <= 0 or > 99_999.999m)
-        {
-            return null;
-        }
-
-        if (request.TotalPrice is < 0 or > 9_999_999.99m)
-        {
-            return null;
-        }
-
-        if (request.Note is not null && request.Note.Length > 1000)
+        if (!IsRequestValid(
+                Guid.NewGuid(),
+                request.OdometerKm,
+                request.Liters,
+                request.TotalPrice,
+                request.Note))
         {
             return null;
         }
@@ -160,7 +146,22 @@ public sealed class FuelFillUpService : IFuelFillUpService
         return true;
     }
 
-    private static FuelFillUpResponse MapToResponse(FuelFillUp fuelFillUp)
+    private static bool IsRequestValid(
+        Guid vehicleId,
+        decimal odometerKm,
+        decimal liters,
+        decimal totalPrice,
+        string? note)
+    {
+        return vehicleId != Guid.Empty &&
+               odometerKm is >= 0 and <= 9_999_999_999.9m &&
+               liters is > 0 and <= 99_999.999m &&
+               totalPrice is >= 0 and <= 9_999_999.99m &&
+               (note is null || note.Length <= 1000);
+    }
+
+    private static FuelFillUpResponse MapToResponse(
+        FuelFillUp fuelFillUp)
     {
         return new FuelFillUpResponse
         {

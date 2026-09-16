@@ -37,6 +37,20 @@ public sealed class FuelFillUpRepository : IFuelFillUpRepository
                     ff.UserId == userId,
                 cancellationToken);
     }
+    
+    public Task<bool> VehicleBelongsToUserAsync(
+        Guid vehicleId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        return _dbContext.Vehicles
+            .AsNoTracking()
+            .AnyAsync(
+                vehicle =>
+                    vehicle.Id == vehicleId &&
+                    vehicle.UserId == userId,
+                cancellationToken);
+    }
 
     public Task AddAsync(
         FuelFillUp fuelFillUp,

@@ -208,9 +208,9 @@ public sealed class ExpenseService : IExpenseService
         ExpenseCategory category,
         string? note)
     {
-        if (amount is < 0 or > 9_999_999_999.99m)
+        if (amount is <= 0 or > 9_999_999_999.99m)
         {
-            return "Az összeg nem lehet negatív, és túl nagy érték sem lehet.";
+            return "Az összeg nem lehet nulla vagy negatív, és túl nagy érték sem lehet.";
         }
 
         if (!Enum.IsDefined(typeof(ExpenseCategory), category))
