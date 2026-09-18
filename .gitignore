@@ -428,3 +428,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Local backend launch profile for LAN/mobile development
+/backend/Logly.Api/Properties/launchSettings.json
