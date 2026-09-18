@@ -25,22 +25,89 @@ import type {
 
 // ---------- Auth ----------
 
+type LoginApiResponse =
+  | string
+  | {
+      accessToken?: string;
+      token?: string;
+      access_token?: string;
+      jwt?: string;
+      user?: CurrentUserResponse;
+    };
+
+function extractAccessToken(response: LoginApiResponse): string | null {
+  if (typeof response === "string") {
+    return response.trim() || null;
+  }
+
+  return (
+    response.accessToken ??
+    response.token ??
+    response.access_token ??
+    response.jwt ??
+    null
+  );
+}
+
+async function getCurrentUserWithToken(
+  accessToken: string
+): Promise<CurrentUserResponse> {
+  const response = await apiClient.get<CurrentUserResponse>("/api/auth/me", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  return response.data;
+}
+
+async function createAuthResponse(
+  data: LoginApiResponse
+): Promise<AuthResponse> {
+  console.log(
+    "AUTH API RESPONSE TYPE",
+    typeof data === "string" ? "string" : "object"
+  );
+
+  if (typeof data !== "string") {
+    console.log("AUTH API RESPONSE KEYS", Object.keys(data));
+  }
+
+  const accessToken = extractAccessToken(data);
+
+  if (!accessToken) {
+    throw new Error("A szerver nem adott vissza érvényes belépési tokent.");
+  }
+
+  const user =
+    typeof data === "object" && data.user
+      ? data.user
+      : await getCurrentUserWithToken(accessToken);
+
+  return {
+    accessToken,
+    user,
+  };
+}
+
 export async function login(request: LoginRequest): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>(
+  const response = await apiClient.post<LoginApiResponse>(
     "/api/auth/login",
     request
   );
-  return response.data;
+
+  return createAuthResponse(response.data);
 }
 
 export async function register(
   request: RegisterRequest
 ): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>(
+  const response = await apiClient.post<LoginApiResponse>(
     "/api/auth/register",
     request
   );
-  return response.data;
+
+  return createAuthResponse(response.data);
 }
 
 export async function getCurrentUser(): Promise<CurrentUserResponse> {

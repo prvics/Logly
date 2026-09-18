@@ -1,87 +1,111 @@
 import { create } from "zustand";
-import * as SecureStore from "expo-secure-store";
-import { AUTH_TOKEN_KEY } from "../api/client";
-import type { AuthResponse } from "../types/api";
+import { authStorage } from "../storage/authStorage";
+import type { AuthResponse, AuthUser } from "../api/types";
 
-const AUTH_USER_KEY = "logly_auth_user";
-
-
-export interface StoredAuthUser {
-  userId: string;
-  email: string;
-  displayName: string | null;
-}
-
-interface AuthState {
-  token: string | null;
-  user: StoredAuthUser | null;
-  expiresAtUtc: string | null;
+type AuthState = {
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  user: AuthUser | null;
 
   loginWithResponse: (response: AuthResponse) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
-}
+};
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
-  user: null,
-  expiresAtUtc: null,
+  accessToken: null,
   isAuthenticated: false,
   isLoading: true,
+  user: null,
 
-  loginWithResponse: async (response: AuthResponse) => {
-    const user: StoredAuthUser = {
-      userId: response.userId,
-      email: response.email,
-      displayName: response.displayName,
-    };
+  loginWithResponse: async (response) => {
+    console.log("AUTH RESPONSE KEYS", Object.keys(response));
+    console.log("AUTH RESPONSE USER", response.user);
 
-    await SecureStore.setItemAsync(AUTH_TOKEN_KEY, response.accessToken);
-    await SecureStore.setItemAsync(AUTH_USER_KEY, JSON.stringify(user));
+    try {
+      await Promise.all([
+        authStorage.setAccessToken(response.accessToken),
+        authStorage.setUser(response.user),
+      ]);
 
-    set({
-      token: response.accessToken,
-      user,
-      expiresAtUtc: response.expiresAtUtc,
-      isAuthenticated: true,
-      isLoading: false,
-    });
+      set({
+        accessToken: response.accessToken,
+        isAuthenticated: true,
+        isLoading: false,
+        user: response.user,
+      });
+    } catch (error) {
+      console.error("AUTH STORAGE SAVE FAILED", error);
+
+      try {
+        await authStorage.clear();
+      } catch {
+        // The in-memory auth state is still cleared below.
+      }
+
+      set({
+        accessToken: null,
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+      });
+
+      throw error;
+    }
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(AUTH_USER_KEY);
-
-    set({
-      token: null,
-      user: null,
-      expiresAtUtc: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
+    try {
+      await authStorage.clear();
+    } finally {
+      set({
+        accessToken: null,
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+      });
+    }
   },
 
   restoreSession: async () => {
     try {
-      const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
-      const userJson = await SecureStore.getItemAsync(AUTH_USER_KEY);
+      const [accessToken, user] = await Promise.all([
+        authStorage.getAccessToken(),
+        authStorage.getUser<AuthUser>(),
+      ]);
 
-      if (token && userJson) {
-        const user: StoredAuthUser = JSON.parse(userJson);
+      console.log("RESTORE SESSION", {
+        hasAccessToken: Boolean(accessToken),
+        hasUser: Boolean(user),
+      });
 
+      if (!accessToken || !user) {
         set({
-          token,
-          user,
-          isAuthenticated: true,
+          accessToken: null,
+          isAuthenticated: false,
           isLoading: false,
+          user: null,
         });
-      } else {
-        set({ isLoading: false });
+
+        return;
       }
-    } catch {
-      set({ isLoading: false });
+
+      set({
+        accessToken,
+        isAuthenticated: true,
+        isLoading: false,
+        user,
+      });
+    } catch (error) {
+      console.error("RESTORE SESSION FAILED", error);
+
+      set({
+        accessToken: null,
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+      });
     }
   },
 }));

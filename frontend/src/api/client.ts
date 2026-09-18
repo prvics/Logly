@@ -1,40 +1,64 @@
 import axios, { AxiosError } from "axios";
-import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
-import type { ApiErrorResponse } from "../types/api";
+import { authStorage } from "../storage/authStorage";
 
-const DEV_MACHINE_LAN_IP = process.env.EXPO_PUBLIC_API_LAN_IP ?? "localhost";
+const lanIp = process.env.EXPO_PUBLIC_API_LAN_IP;
 
-function resolveBaseUrl(): string {
-  if (Platform.OS === "web") {
-    return "http://localhost:5000";
-  }
-
-  if (Platform.OS === "android") {
-    // android mobile
-    //return `http://${DEV_MACHINE_LAN_IP}:5000`
-    return "http://10.0.2.2:5000";
-  }
-
-  // iOS mobile
-  return `http://${DEV_MACHINE_LAN_IP}:5000`;
+if (!lanIp) {
+  throw new Error(
+    "Hiányzik az EXPO_PUBLIC_API_LAN_IP változó a frontend/.env fájlból."
+  );
 }
 
-export const API_BASE_URL = resolveBaseUrl();
+const baseURL = lanIp.replace(/\/$/, "");
 
-const AUTH_TOKEN_KEY = "logly_auth_token";
+export type ValidationError = {
+  field: string;
+  message: string;
+};
+
+type ApiErrorResponse = {
+  message?: string;
+  errors?: ValidationError[];
+  title?: string;
+};
+
+export class ApiError extends Error {
+  readonly status: number | null;
+  readonly errors: ValidationError[];
+
+  constructor(
+    message: string,
+    status: number | null = null,
+    errors: ValidationError[] = []
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.errors = errors;
+  }
+
+  fieldError(field: string): string | null {
+    const normalizedField = field.toLowerCase();
+
+    return (
+      this.errors.find(
+        (error) => error.field.toLowerCase() === normalizedField
+      )?.message ?? null
+    );
+  }
+}
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10_000,
+  baseURL,
   headers: {
+    Accept: "application/json",
     "Content-Type": "application/json",
   },
+  timeout: 15_000,
 });
 
-// JWT if saved
 apiClient.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+  const token = await authStorage.getAccessToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -43,45 +67,26 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-export class ApiError extends Error {
-  public readonly status: number | null;
-  public readonly fieldErrors: Record<string, string[]>;
-
-  constructor(
-    message: string,
-    status: number | null,
-    fieldErrors: Record<string, string[]> = {}
-  ) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.fieldErrors = fieldErrors;
-  }
-
-  fieldError(fieldName: string): string | undefined {
-    return this.fieldErrors[fieldName]?.[0];
-  }
-}
-
-// Válasz interceptor: a backend KÉTFÉLE hiba-alakot ad vissza:
-// 1) FluentValidation hiba: { message: "Érvénytelen kérés.", errors: {...} }
-//    -> ValidationExtensions.ToBadRequest()
-// 2) Egyedi hiba: { message: "..." } (pl. Unauthorized, NotFound eseteknél)
-//    -> pl. NotFound(new { message = "..." })
-// Mindkettőben van "message" mező, az "errors" csak az elsőben.
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorResponse>) => {
-    const data = error.response?.data;
-    const status = error.response?.status ?? null;
+    if (!error.response) {
+      return Promise.reject(
+        new ApiError(
+          "Nem sikerült kapcsolódni a szerverhez. Ellenőrizd, hogy a backend fut-e, és az API címe helyes-e."
+        )
+      );
+    }
+
+    const { status, data } = error.response;
 
     const message =
-      data?.message ?? error.message ?? "Ismeretlen hiba történt.";
+      data?.message ??
+      data?.title ??
+      "A szerver nem tudta feldolgozni a kérést.";
 
-    const fieldErrors = data?.errors ?? {};
-
-    return Promise.reject(new ApiError(message, status, fieldErrors));
+    return Promise.reject(
+      new ApiError(message, status, data?.errors ?? [])
+    );
   }
 );
-
-export { AUTH_TOKEN_KEY };
