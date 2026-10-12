@@ -2,9 +2,13 @@ import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+
 import { LoginScreen } from "../screens/LoginScreen";
 import { RegisterScreen } from "../screens/RegisterScreen";
 import { DashboardScreen } from "../screens/DashboardScreen";
+import { CaptureScreen } from "../screens/CaptureScreen";
+import { ProfileScreen } from "../screens/ProfileScreen";
 import { useAuthStore } from "../store/authStore";
 
 export type AuthStackParamList = {
@@ -12,12 +16,14 @@ export type AuthStackParamList = {
   Register: undefined;
 };
 
-type AppStackParamList = {
+type AppTabParamList = {
   Dashboard: undefined;
+  Capture: undefined;
+  Profile: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
-const AppStack = createNativeStackNavigator<AppStackParamList>();
+const Tabs = createBottomTabNavigator<AppTabParamList>();
 
 function AuthNavigator() {
   return (
@@ -43,21 +49,47 @@ function AuthNavigator() {
   );
 }
 
-function AuthenticatedNavigator() {
+function AppTabs() {
   return (
-    <AppStack.Navigator
+    <Tabs.Navigator
+      initialRouteName="Dashboard"
       screenOptions={{
         headerShadowVisible: false,
         headerStyle: { backgroundColor: "#F6F7FB" },
         headerTintColor: "#1B1D28",
+        tabBarActiveTintColor: "#365CF5",
+        tabBarInactiveTintColor: "#777B88",
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopColor: "#E7E9F0",
+        },
       }}
     >
-      <AppStack.Screen
+      <Tabs.Screen
         component={DashboardScreen}
         name="Dashboard"
-        options={{ title: "Logly" }}
+        options={{
+          title: "Logly",
+          tabBarLabel: "Áttekintés",
+        }}
       />
-    </AppStack.Navigator>
+      <Tabs.Screen
+        component={CaptureScreen}
+        name="Capture"
+        options={{
+          title: "Rögzítés",
+          tabBarLabel: "Rögzítés",
+        }}
+      />
+      <Tabs.Screen
+        component={ProfileScreen}
+        name="Profile"
+        options={{
+          title: "Profil",
+          tabBarLabel: "Profil",
+        }}
+      />
+    </Tabs.Navigator>
   );
 }
 
@@ -70,13 +102,9 @@ function LoadingScreen() {
 }
 
 export function AppNavigator() {
-  const isAuthenticated = useAuthStore(
-    (state) => state.isAuthenticated
-  );
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
-  const restoreSession = useAuthStore(
-    (state) => state.restoreSession
-  );
+  const restoreSession = useAuthStore((state) => state.restoreSession);
 
   useEffect(() => {
     void restoreSession();
@@ -88,11 +116,7 @@ export function AppNavigator() {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? (
-        <AuthenticatedNavigator />
-      ) : (
-        <AuthNavigator />
-      )}
+      {isAuthenticated ? <AppTabs /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }
