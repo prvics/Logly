@@ -5,16 +5,19 @@ namespace Logly.Infrastructure.Persistence;
 
 public class LoglyDbContext : DbContext
 {
-    public LoglyDbContext(DbContextOptions<LoglyDbContext> options)
+    public LoglyDbContext(
+        DbContextOptions<LoglyDbContext> options)
         : base(options)
     {
     }
 
     public DbSet<AppUser> Users => Set<AppUser>();
 
-    public DbSet<DeliveryCompany> DeliveryCompanies => Set<DeliveryCompany>();
+    public DbSet<DeliveryCompany> DeliveryCompanies =>
+        Set<DeliveryCompany>();
 
-    public DbSet<UserCompany> UserCompanies => Set<UserCompany>();
+    public DbSet<UserCompany> UserCompanies =>
+        Set<UserCompany>();
 
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
 
@@ -22,14 +25,20 @@ public class LoglyDbContext : DbContext
 
     public DbSet<Expense> Expenses => Set<Expense>();
 
-    public DbSet<FuelFillUp> FuelFillUps => Set<FuelFillUp>();
-    
+    public DbSet<FuelFillUp> FuelFillUps =>
+        Set<FuelFillUp>();
+
     public DbSet<Income> Incomes => Set<Income>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<PasswordResetToken> PasswordResetTokens =>
+        Set<PasswordResetToken>();
+
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(LoglyDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(LoglyDbContext).Assembly);
     }
 }

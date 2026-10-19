@@ -14,6 +14,7 @@ import type {
   DashboardSummaryResponse,
 } from "../types/api";
 import { useAuthStore } from "../store/authStore";
+import { LoglyLogo } from "../components/ui/LoglyLogo";
 
 const formatHuf = (amount: number): string =>
   new Intl.NumberFormat("hu-HU", {
@@ -120,7 +121,10 @@ export function DashboardScreen() {
     >
       <View style={styles.header}>
         <View>
-          <Text style={styles.brand}>Logly</Text>
+          <LoglyLogo
+            width={160}
+            style={styles.brandLogo}
+          />
           <Text style={styles.greeting}>Szia, {displayName}!</Text>
           <Text style={styles.subtitle}>Ez a havi összesítésed.</Text>
         </View>
@@ -207,9 +211,8 @@ export function DashboardScreen() {
             <View style={styles.metricsGrid}>
               <MetricCard
                 label="Ledolgozott idő"
-                value={`${Math.floor(summary.totalWorkedMinutes / 60)} óra ${
-                  summary.totalWorkedMinutes % 60
-                } perc`}
+                value={`${Math.floor(summary.totalWorkedMinutes / 60)} óra ${summary.totalWorkedMinutes % 60
+                  } perc`}
               />
               <MetricCard
                 label="Megtett út"
@@ -290,11 +293,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 24,
   },
-  brand: {
-    color: "#1B1D28",
-    fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 24,
+  brandLogo: {
+    marginBottom: 16,
   },
   greeting: {
     color: "#1B1D28",

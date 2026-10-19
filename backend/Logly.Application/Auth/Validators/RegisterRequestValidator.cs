@@ -17,13 +17,16 @@ public sealed class RegisterRequestValidator
         RuleFor(request => request.Password)
             .NotEmpty()
             .WithMessage("A jelszó megadása kötelező.")
-            .MinimumLength(8)
-            .WithMessage("A jelszónak legalább 8 karakterből kell állnia.");
+            .MinimumLength(12)
+            .WithMessage(
+                "A jelszónak legalább 12 karakterből kell állnia.");
 
         RuleFor(request => request.DisplayName)
             .NotEmpty()
-            .WithMessage("A megjelenített név nem állhat csak szóközökből.")
+            .WithMessage(
+                "A megjelenített név nem állhat csak szóközökből.")
             .MaximumLength(100)
-            .WithMessage("A megjelenített név legfeljebb 100 karakter lehet.");
+            .WithMessage(
+                "A megjelenített név legfeljebb 100 karakter lehet.");
     }
 }

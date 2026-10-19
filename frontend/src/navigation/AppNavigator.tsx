@@ -1,11 +1,19 @@
 import { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+} from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 import { LoginScreen } from "../screens/LoginScreen";
 import { RegisterScreen } from "../screens/RegisterScreen";
+import {
+  ForgotPasswordScreen,
+  ResetPasswordScreen,
+} from "../screens/PasswordResetScreens";
 import { DashboardScreen } from "../screens/DashboardScreen";
 import { CaptureScreen } from "../screens/CaptureScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
@@ -14,6 +22,8 @@ import { useAuthStore } from "../store/authStore";
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: undefined;
 };
 
 type AppTabParamList = {
@@ -22,7 +32,9 @@ type AppTabParamList = {
   Profile: undefined;
 };
 
-const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const AuthStack =
+  createNativeStackNavigator<AuthStackParamList>();
+
 const Tabs = createBottomTabNavigator<AppTabParamList>();
 
 function AuthNavigator() {
@@ -31,19 +43,42 @@ function AuthNavigator() {
       initialRouteName="Login"
       screenOptions={{
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: "#F6F7FB" },
+        headerStyle: {
+          backgroundColor: "#F6F7FB",
+        },
         headerTintColor: "#1B1D28",
       }}
     >
       <AuthStack.Screen
         component={LoginScreen}
         name="Login"
-        options={{ headerShown: false }}
+        options={{
+          headerShown: false,
+        }}
       />
+
       <AuthStack.Screen
         component={RegisterScreen}
         name="Register"
-        options={{ title: "Regisztráció" }}
+        options={{
+          title: "Regisztráció",
+        }}
+      />
+
+      <AuthStack.Screen
+        component={ForgotPasswordScreen}
+        name="ForgotPassword"
+        options={{
+          title: "Jelszó-helyreállítás",
+        }}
+      />
+
+      <AuthStack.Screen
+        component={ResetPasswordScreen}
+        name="ResetPassword"
+        options={{
+          title: "Új jelszó",
+        }}
       />
     </AuthStack.Navigator>
   );
@@ -55,7 +90,9 @@ function AppTabs() {
       initialRouteName="Dashboard"
       screenOptions={{
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: "#F6F7FB" },
+        headerStyle: {
+          backgroundColor: "#F6F7FB",
+        },
         headerTintColor: "#1B1D28",
         tabBarActiveTintColor: "#365CF5",
         tabBarInactiveTintColor: "#777B88",
@@ -69,22 +106,27 @@ function AppTabs() {
         component={DashboardScreen}
         name="Dashboard"
         options={{
-          title: "Logly",
+          headerShown: false,
+          title: "Áttekintés",
           tabBarLabel: "Áttekintés",
         }}
       />
+
       <Tabs.Screen
         component={CaptureScreen}
         name="Capture"
         options={{
+          headerShown: false,
           title: "Rögzítés",
           tabBarLabel: "Rögzítés",
         }}
       />
+
       <Tabs.Screen
         component={ProfileScreen}
         name="Profile"
         options={{
+          headerShown: false,
           title: "Profil",
           tabBarLabel: "Profil",
         }}
@@ -102,9 +144,17 @@ function LoadingScreen() {
 }
 
 export function AppNavigator() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const restoreSession = useAuthStore((state) => state.restoreSession);
+  const isAuthenticated = useAuthStore(
+    (state) => state.isAuthenticated
+  );
+
+  const isLoading = useAuthStore(
+    (state) => state.isLoading
+  );
+
+  const restoreSession = useAuthStore(
+    (state) => state.restoreSession
+  );
 
   useEffect(() => {
     void restoreSession();

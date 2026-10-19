@@ -237,6 +237,42 @@ namespace Logly.Infrastructure.Migrations
                     b.ToTable("Incomes", (string)null);
                 });
 
+            modelBuilder.Entity("Logly.Domain.Entities.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AppUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UsedAtUtc")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.HasIndex("ExpiresAtUtc");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("password_reset_tokens", (string)null);
+                });
+
             modelBuilder.Entity("Logly.Domain.Entities.Shift", b =>
                 {
                     b.Property<Guid>("Id")
@@ -443,6 +479,17 @@ namespace Logly.Infrastructure.Migrations
                     b.Navigation("User");
 
                     b.Navigation("UserCompany");
+                });
+
+            modelBuilder.Entity("Logly.Domain.Entities.PasswordResetToken", b =>
+                {
+                    b.HasOne("Logly.Domain.Entities.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
                 });
 
             modelBuilder.Entity("Logly.Domain.Entities.Shift", b =>

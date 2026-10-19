@@ -69,7 +69,7 @@ public sealed class DashboardRepository : IDashboardRepository
             query = query.Where(expense =>
                 expense.UserCompanyId == userCompanyId.Value);
         }
-        else if (vehicleId.HasValue)
+        if (vehicleId.HasValue)
         {
             query = query.Where(expense =>
                 expense.VehicleId == vehicleId.Value);
