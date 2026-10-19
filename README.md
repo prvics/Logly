@@ -311,9 +311,11 @@ Variables prefixed with `EXPO_PUBLIC_` are exposed to the client application. Th
 - [x] Session restoration
 - [x] Initial monthly dashboard
 - [x] Main tab navigation
-- [ ] Shift entry and editing
+- [x] Shift entry
+- [ ] Shift editing
 - [ ] Expense entry and editing
-- [ ] Fuel fill-up entry and editing
+- [x] Fuel fill-up entry
+- [ ] Fuel fill-up editing
 - [ ] Vehicle management
 - [ ] Reporting filters
 - [ ] Dashboard charts
