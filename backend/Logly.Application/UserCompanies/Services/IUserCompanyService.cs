@@ -8,4 +8,15 @@ public interface IUserCompanyService
         Guid userId,
         bool? isActive,
         CancellationToken cancellationToken);
+
+    Task<UserCompanyResponse> CreateAsync(
+        Guid userId,
+        CreateUserCompanyRequest request,
+        CancellationToken cancellationToken);
+    
+    Task<UserCompanyResponse?> UpdateAsync(
+        Guid userId,
+        Guid id,
+        UpdateUserCompanyRequest request,
+        CancellationToken cancellationToken);
 }

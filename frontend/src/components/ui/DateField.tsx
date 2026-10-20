@@ -12,6 +12,8 @@ import {
     LocaleConfig,
 } from "react-native-calendars";
 
+import { useTheme } from "../../theme/ThemeProvider";
+
 LocaleConfig.locales["hu"] = {
     monthNames: [
         "Január",
@@ -87,6 +89,8 @@ export function DateField({
     disabled = false,
     error,
 }: Props) {
+    const { colors, themeName } = useTheme();
+
     const [isOpen, setIsOpen] = useState(false);
 
     function closeCalendar() {
@@ -95,7 +99,14 @@ export function DateField({
 
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
+            <Text
+                style={[
+                    styles.label,
+                    { color: colors.textPrimary },
+                ]}
+            >
+                {label}
+            </Text>
 
             <Pressable
                 accessibilityRole="button"
@@ -109,27 +120,48 @@ export function DateField({
                 onPress={() => setIsOpen(true)}
                 style={({ pressed }) => [
                     styles.field,
-                    error ? styles.fieldError : null,
-                    pressed && !disabled ? styles.pressed : null,
+                    {
+                        backgroundColor: colors.surface,
+                        borderColor: error
+                            ? colors.danger
+                            : colors.border,
+                    },
+                    pressed && !disabled
+                        ? styles.pressed
+                        : null,
                     disabled ? styles.disabled : null,
                 ]}
             >
                 <Text
                     style={[
                         styles.value,
-                        !value ? styles.placeholder : null,
+                        {
+                            color: value
+                                ? colors.textPrimary
+                                : colors.textSecondary,
+                        },
                     ]}
                 >
                     {displayDate(value)}
                 </Text>
 
-                <Text style={styles.openText}>Naptár</Text>
+                <Text
+                    style={[
+                        styles.openText,
+                        { color: colors.primary },
+                    ]}
+                >
+                    Naptár
+                </Text>
             </Pressable>
 
             {error ? (
                 <Text
                     accessibilityLiveRegion="polite"
-                    style={styles.errorText}
+                    style={[
+                        styles.errorText,
+                        { color: colors.danger },
+                    ]}
                 >
                     {error}
                 </Text>
@@ -146,19 +178,27 @@ export function DateField({
                         accessibilityLabel="Naptár bezárása"
                         accessibilityRole="button"
                         onPress={closeCalendar}
-                        style={StyleSheet.absoluteFillObject}
+                        style={StyleSheet.absoluteFill}
                     />
 
                     <View
                         accessibilityViewIsModal
-                        style={styles.modalCard}
+                        style={[
+                            styles.modalCard,
+                            { backgroundColor: colors.surface },
+                        ]}
                     >
                         <ScrollView
                             keyboardShouldPersistTaps="handled"
                             contentContainerStyle={styles.modalContent}
                         >
                             <View style={styles.modalHeader}>
-                                <Text style={styles.modalTitle}>
+                                <Text
+                                    style={[
+                                        styles.modalTitle,
+                                        { color: colors.textPrimary },
+                                    ]}
+                                >
                                     {label}
                                 </Text>
 
@@ -167,7 +207,12 @@ export function DateField({
                                     onPress={closeCalendar}
                                     style={styles.closeButton}
                                 >
-                                    <Text style={styles.closeText}>
+                                    <Text
+                                        style={[
+                                            styles.closeText,
+                                            { color: colors.primary },
+                                        ]}
+                                    >
                                         Bezárás
                                     </Text>
                                 </Pressable>
@@ -175,6 +220,7 @@ export function DateField({
 
                             {isOpen ? (
                                 <Calendar
+                                    key={themeName}
                                     current={value || undefined}
                                     firstDay={1}
                                     monthFormat="yyyy. MMMM"
@@ -183,8 +229,8 @@ export function DateField({
                                             ? {
                                                 [value]: {
                                                     selected: true,
-                                                    selectedColor: "#365CF5",
-                                                    selectedTextColor: "#FFFFFF",
+                                                    selectedColor: colors.primary,
+                                                    selectedTextColor: colors.primaryText,
                                                 },
                                             }
                                             : {}
@@ -197,13 +243,16 @@ export function DateField({
                                         closeCalendar();
                                     }}
                                     theme={{
-                                        calendarBackground: "#FFFFFF",
-                                        textSectionTitleColor: "#666B7A",
-                                        todayTextColor: "#365CF5",
-                                        dayTextColor: "#1B1D28",
-                                        monthTextColor: "#1B1D28",
-                                        arrowColor: "#365CF5",
-                                        textDisabledColor: "#C5C8D0",
+                                        backgroundColor: colors.surface,
+                                        calendarBackground: colors.surface,
+                                        textSectionTitleColor: colors.textSecondary,
+                                        todayTextColor: colors.primary,
+                                        dayTextColor: colors.textPrimary,
+                                        monthTextColor: colors.textPrimary,
+                                        arrowColor: colors.primary,
+                                        textDisabledColor: colors.textSecondary,
+                                        selectedDayBackgroundColor: colors.primary,
+                                        selectedDayTextColor: colors.primaryText,
                                         textDayFontSize: 15,
                                         textMonthFontSize: 17,
                                         textDayHeaderFontSize: 13,
@@ -223,14 +272,11 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     label: {
-        color: "#2A2D3A",
         fontSize: 14,
         fontWeight: "600",
     },
     field: {
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
-        borderColor: "#D9DCE5",
         borderRadius: 12,
         borderWidth: 1,
         flexDirection: "row",
@@ -239,23 +285,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
     },
-    fieldError: {
-        borderColor: "#D92D20",
-    },
     value: {
-        color: "#1B1D28",
+        flexShrink: 1,
         fontSize: 16,
     },
-    placeholder: {
-        color: "#8A8A8A",
-    },
     openText: {
-        color: "#365CF5",
         fontSize: 13,
         fontWeight: "600",
+        marginLeft: 12,
     },
     errorText: {
-        color: "#D92D20",
         fontSize: 13,
         lineHeight: 18,
     },
@@ -267,13 +306,12 @@ const styles = StyleSheet.create({
     },
     overlay: {
         alignItems: "center",
-        backgroundColor: "rgba(27, 29, 40, 0.45)",
+        backgroundColor: "rgba(0, 0, 0, 0.55)",
         flex: 1,
         justifyContent: "center",
         padding: 20,
     },
     modalCard: {
-        backgroundColor: "#FFFFFF",
         borderRadius: 18,
         maxHeight: "90%",
         maxWidth: 420,
@@ -291,7 +329,6 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     modalTitle: {
-        color: "#1B1D28",
         flex: 1,
         fontSize: 18,
         fontWeight: "700",
@@ -302,7 +339,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
     },
     closeText: {
-        color: "#365CF5",
         fontSize: 14,
         fontWeight: "600",
     },

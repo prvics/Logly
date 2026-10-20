@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { authStorage } from "../storage/authStorage";
-import type { AuthResponse, AuthUser } from "../api/types";
+import type { AuthResponse, CurrentUserResponse } from "../types/api";
 
 type AuthState = {
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: AuthUser | null;
+  user: CurrentUserResponse | null;
 
   loginWithResponse: (response: AuthResponse) => Promise<void>;
   logout: () => Promise<void>;
@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const [accessToken, user] = await Promise.all([
         authStorage.getAccessToken(),
-        authStorage.getUser<AuthUser>(),
+        authStorage.getUser<CurrentUserResponse>(),
       ]);
 
       console.log("RESTORE SESSION", {

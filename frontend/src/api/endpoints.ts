@@ -21,6 +21,11 @@ import type {
   DashboardCompanyResponse,
   DashboardVehicleResponse,
   DashboardPeriod,
+  DeliveryCompanyResponse,
+  CreateDeliveryCompanyRequest,
+  UserCompanyResponse,
+  CreateUserCompanyRequest,
+  UpdateUserCompanyRequest,
 } from "../types/api";
 
 // ---------- Auth ----------
@@ -28,12 +33,12 @@ import type {
 type LoginApiResponse =
   | string
   | {
-      accessToken?: string;
-      token?: string;
-      access_token?: string;
-      jwt?: string;
-      user?: CurrentUserResponse;
-    };
+    accessToken?: string;
+    token?: string;
+    access_token?: string;
+    jwt?: string;
+    user?: CurrentUserResponse;
+  };
 
 function extractAccessToken(response: LoginApiResponse): string | null {
   if (typeof response === "string") {
@@ -333,5 +338,65 @@ export async function getDashboardByVehicle(
     "/api/dashboard/by-vehicle",
     { params }
   );
+  return response.data;
+}
+
+// ---------- Delivery companies ----------
+
+export async function getDeliveryCompanies():
+  Promise<DeliveryCompanyResponse[]> {
+  const response = await apiClient.get<DeliveryCompanyResponse[]>(
+    "/api/delivery-companies"
+  );
+
+  return response.data;
+}
+
+export async function createDeliveryCompany(
+  request: CreateDeliveryCompanyRequest
+): Promise<DeliveryCompanyResponse> {
+  const response = await apiClient.post<DeliveryCompanyResponse>(
+    "/api/delivery-companies",
+    request
+  );
+
+  return response.data;
+}
+
+// ---------- User companies ----------
+
+export async function getUserCompanies(
+  isActive?: boolean
+): Promise<UserCompanyResponse[]> {
+  const response = await apiClient.get<UserCompanyResponse[]>(
+    "/api/user-companies",
+    {
+      params: { isActive },
+    }
+  );
+
+  return response.data;
+}
+
+export async function createUserCompany(
+  request: CreateUserCompanyRequest
+): Promise<UserCompanyResponse> {
+  const response = await apiClient.post<UserCompanyResponse>(
+    "/api/user-companies",
+    request
+  );
+
+  return response.data;
+}
+
+export async function updateUserCompany(
+  id: string,
+  request: UpdateUserCompanyRequest
+): Promise<UserCompanyResponse> {
+  const response = await apiClient.put<UserCompanyResponse>(
+    `/api/user-companies/${id}`,
+    request
+  );
+
   return response.data;
 }

@@ -1,58 +1,205 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
+import { ThemeSwitch } from "../components/ui/ThemeSwitch";
+import { useTheme } from "../theme/ThemeProvider";
+import { UserCompaniesSection } from "../components/profile/UserCompaniesSection";
 import { useAuthStore } from "../store/authStore";
 
 export function ProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profil</Text>
-      <Text style={styles.label}>Név</Text>
-      <Text style={styles.value}>{user?.displayName || "Nincs megadva"}</Text>
-      <Text style={styles.label}>E-mail</Text>
-      <Text style={styles.value}>{user?.email || "Nincs megadva"}</Text>
+  const { colors, mode, toggleMode } = useTheme();
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => void logout()}
-        style={({ pressed }) => [
-          styles.logoutButton,
-          pressed ? styles.pressed : null,
-        ]}
-      >
-        <Text style={styles.logoutText}>Kijelentkezés</Text>
-      </Pressable>
-    </View>
+  return (
+    <ScrollView
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.content}>
+        <Text
+          style={[
+            styles.title,
+            { color: colors.textPrimary },
+          ]}
+        >
+          Profil
+        </Text>
+
+        <Text
+          style={[
+            styles.label,
+            { color: colors.textSecondary },
+          ]}
+        >
+          Név
+        </Text>
+
+        <Text
+          style={[
+            styles.value,
+            { color: colors.textPrimary },
+          ]}
+        >
+          {user?.displayName || "Nincs megadva"}
+        </Text>
+
+        <Text
+          style={[
+            styles.label,
+            { color: colors.textSecondary },
+          ]}
+        >
+          E-mail
+        </Text>
+
+        <Text
+          style={[
+            styles.value,
+            { color: colors.textPrimary },
+          ]}
+        >
+          {user?.email || "Nincs megadva"}
+        </Text>
+
+        <UserCompaniesSection />
+
+        <View
+          style={[
+            styles.appearanceCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: colors.textPrimary },
+            ]}
+          >
+            Megjelenés
+          </Text>
+
+          <View style={styles.themeRow}>
+            <View style={styles.themeText}>
+              <Text
+                style={[
+                  styles.themeTitle,
+                  { color: colors.textPrimary },
+                ]}
+              >
+                Sötét mód
+              </Text>
+
+              <Text
+                style={[
+                  styles.themeSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                Sötétebb színek és kisebb szemterhelés.
+              </Text>
+            </View>
+
+            <ThemeSwitch
+              value={mode === "dark"}
+              onValueChange={toggleMode}
+              accessibilityLabel="Sötét mód bekapcsolása vagy kikapcsolása"
+            />
+          </View>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void logout()}
+          style={({ pressed }) => [
+            styles.logoutButton,
+            {
+              borderColor: colors.danger,
+            },
+            pressed ? styles.pressed : null,
+          ]}
+        >
+          <Text
+            style={[
+              styles.logoutText,
+              { color: colors.danger },
+            ]}
+          >
+            Kijelentkezés
+          </Text>
+        </Pressable>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#F6F7FB",
+  screen: {
     flex: 1,
+  },
+  container: {
+    flexGrow: 1,
     padding: 24,
+    paddingBottom: 40,
+  },
+  content: {
+    alignSelf: "center",
+    maxWidth: 720,
+    width: "100%",
   },
   title: {
-    color: "#1B1D28",
     fontSize: 26,
     fontWeight: "700",
-    marginBottom: 24,
+    marginBottom: 10,
   },
   label: {
-    color: "#666B7A",
     fontSize: 14,
     marginTop: 14,
   },
   value: {
-    color: "#1B1D28",
     fontSize: 16,
     fontWeight: "600",
     marginTop: 4,
   },
+  appearanceCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 32,
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+  themeRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 16,
+  },
+  themeText: {
+    flex: 1,
+  },
+  themeTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  themeSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 4,
+  },
   logoutButton: {
     alignItems: "center",
-    borderColor: "#D92D20",
     borderRadius: 12,
     borderWidth: 1,
     justifyContent: "center",
@@ -60,7 +207,6 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   logoutText: {
-    color: "#D92D20",
     fontSize: 15,
     fontWeight: "700",
   },

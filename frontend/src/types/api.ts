@@ -13,11 +13,8 @@ export interface LoginRequest {
 
 // A /api/auth/register and /api/auth/login endpoint 
 export interface AuthResponse {
-  userId: string;
-  email: string;
-  displayName: string | null;
   accessToken: string;
-  expiresAtUtc: string; // ISO 8601
+  user: CurrentUserResponse;
 }
 
 // A /api/auth/me endpoint
@@ -327,4 +324,42 @@ export interface DashboardVehicleResponse {
 export interface ApiErrorResponse {
   message?: string;
   errors?: Record<string, string[]>;
+}
+
+// ---------- Delivery companies ----------
+
+export interface DeliveryCompanyResponse {
+  id: string;
+  name: string;
+  isSystemDefined: boolean;
+}
+
+export interface CreateDeliveryCompanyRequest {
+  name: string;
+}
+
+// ---------- User companies ----------
+
+export interface UserCompanyResponse {
+  id: string;
+  deliveryCompanyId: string;
+  deliveryCompanyName: string;
+  isSystemDefined: boolean;
+  startedOn: string;
+  endedOn: string | null;
+  isActive: boolean;
+  note: string | null;
+}
+
+export interface CreateUserCompanyRequest {
+  deliveryCompanyId: string;
+  startedOn: string;
+  note: string | null;
+}
+
+export interface UpdateUserCompanyRequest {
+  startedOn: string;
+  endedOn: string | null;
+  isActive: boolean;
+  note: string | null;
 }

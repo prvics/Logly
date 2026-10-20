@@ -1,5 +1,15 @@
-import { useState } from "react";
 import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,115 +21,398 @@ import {
 
 import { ShiftForm } from "../components/capture/ShiftForm";
 import { FuelFillUpForm } from "../components/capture/FuelFillUpForm";
+import { FadeInView } from "../components/ui/FadeInView";
+import { useTheme } from "../theme/ThemeProvider";
 
 type CaptureType = "shift" | "fuel";
 
+const SELECTOR_PADDING = 5;
+const SELECTOR_GAP = 6;
+
+const USE_NATIVE_DRIVER = Platform.OS !== "web";
+
 export function CaptureScreen() {
+  const { colors } = useTheme();
+
   const [captureType, setCaptureType] =
     useState<CaptureType>("shift");
 
+  const [displayedType, setDisplayedType] =
+    useState<CaptureType>("shift");
+
   const [fuelOpened, setFuelOpened] = useState(false);
+  const [selectorWidth, setSelectorWidth] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const mountedRef = useRef(false);
+  const transitioningRef = useRef(false);
+  const enterPendingRef = useRef(false);
+  const reduceMotionRef = useRef(false);
+
+  const indicatorProgress = useRef(
+    new Animated.Value(0)
+  ).current;
+
+  const contentOpacity = useRef(
+    new Animated.Value(1)
+  ).current;
+
+  const contentTranslateX = useRef(
+    new Animated.Value(0)
+  ).current;
+
+  const buttonWidth = Math.max(
+    0,
+    (
+      selectorWidth -
+      SELECTOR_PADDING * 2 -
+      SELECTOR_GAP
+    ) / 2
+  );
+
+  const indicatorTranslateX =
+    indicatorProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [
+        0,
+        buttonWidth + SELECTOR_GAP,
+      ],
+      extrapolate: "clamp",
+    });
+
+  const shiftTextColor =
+    indicatorProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [
+        colors.primaryText,
+        colors.textSecondary,
+      ],
+      extrapolate: "clamp",
+    });
+
+  const fuelTextColor =
+    indicatorProgress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [
+        colors.textSecondary,
+        colors.primaryText,
+      ],
+      extrapolate: "clamp",
+    });
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    void AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (mountedRef.current) {
+          reduceMotionRef.current = enabled;
+        }
+      })
+      .catch(() => {
+        // A beállítás lekérdezése nem akadályozza a képernyőt.
+      });
+
+    const subscription =
+      AccessibilityInfo.addEventListener(
+        "reduceMotionChanged",
+        (enabled) => {
+          reduceMotionRef.current = enabled;
+        }
+      );
+
+    return () => {
+      mountedRef.current = false;
+      enterPendingRef.current = false;
+      transitioningRef.current = false;
+
+      subscription.remove();
+
+      indicatorProgress.stopAnimation();
+      contentOpacity.stopAnimation();
+      contentTranslateX.stopAnimation();
+    };
+  }, [
+    indicatorProgress,
+    contentOpacity,
+    contentTranslateX,
+  ]);
+
+  const finishTransition = useCallback(() => {
+    if (!mountedRef.current) {
+      return;
+    }
+
+    transitioningRef.current = false;
+    setIsTransitioning(false);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!enterPendingRef.current) {
+      return;
+    }
+
+    enterPendingRef.current = false;
+
+    if (reduceMotionRef.current) {
+      contentOpacity.setValue(1);
+      contentTranslateX.setValue(0);
+      finishTransition();
+      return;
+    }
+
+    Animated.parallel([
+      Animated.timing(contentOpacity, {
+        toValue: 1,
+        duration: 170,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
+      Animated.timing(contentTranslateX, {
+        toValue: 0,
+        duration: 170,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
+    ]).start(() => {
+      finishTransition();
+    });
+  }, [
+    displayedType,
+    contentOpacity,
+    contentTranslateX,
+    finishTransition,
+  ]);
 
   function selectType(type: CaptureType) {
+    if (
+      type === captureType ||
+      transitioningRef.current ||
+      !mountedRef.current
+    ) {
+      return;
+    }
+
+    Keyboard.dismiss();
+
     if (type === "fuel") {
       setFuelOpened(true);
     }
 
+    const targetProgress =
+      type === "shift" ? 0 : 1;
+
+    const direction =
+      type === "fuel" ? 1 : -1;
+
     setCaptureType(type);
+
+    if (reduceMotionRef.current && !__DEV__) {
+      indicatorProgress.setValue(targetProgress);
+      contentOpacity.setValue(1);
+      contentTranslateX.setValue(0);
+      setDisplayedType(type);
+      return;
+    }
+
+    transitioningRef.current = true;
+    setIsTransitioning(true);
+
+    Animated.timing(indicatorProgress, {
+      toValue: targetProgress,
+      duration: 260,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+
+    Animated.parallel([
+      Animated.timing(contentOpacity, {
+        toValue: 0,
+        duration: 90,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
+      Animated.timing(contentTranslateX, {
+        toValue: -8 * direction,
+        duration: 90,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }),
+    ]).start(({ finished }) => {
+      if (!finished || !mountedRef.current) {
+        return;
+      }
+
+      contentTranslateX.setValue(12 * direction);
+      enterPendingRef.current = true;
+
+      setDisplayedType(type);
+    });
   }
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.screen}
+      behavior={
+        Platform.OS === "ios"
+          ? "padding"
+          : undefined
+      }
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
     >
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Adatok rögzítése</Text>
+          <Text
+            style={[
+              styles.title,
+              { color: colors.textPrimary },
+            ]}
+          >
+            Adatok rögzítése
+          </Text>
 
-          <Text style={styles.subtitle}>
+          <Text
+            style={[
+              styles.subtitle,
+              { color: colors.textSecondary },
+            ]}
+          >
             Válaszd ki, mit szeretnél rögzíteni.
           </Text>
         </View>
 
-        <View style={styles.typeSelector}>
+        <View
+          style={[
+            styles.typeSelector,
+            {
+              backgroundColor: colors.surfaceMuted,
+            },
+          ]}
+          onLayout={(event) => {
+            setSelectorWidth(
+              event.nativeEvent.layout.width
+            );
+          }}
+        >
+          {selectorWidth > 0 ? (
+            <Animated.View
+              accessible={false}
+              style={[
+                styles.activeIndicator,
+                {
+                  backgroundColor: colors.primary,
+                  width: buttonWidth,
+                  transform: [
+                    {
+                      translateX:
+                        indicatorTranslateX,
+                    },
+                  ],
+                },
+              ]}
+            />
+          ) : null}
+
           <Pressable
             accessibilityRole="tab"
+            accessibilityLabel="Műszak"
             accessibilityState={{
-              selected: captureType === "shift",
+              selected:
+                captureType === "shift",
+              disabled: isTransitioning,
             }}
+            disabled={isTransitioning}
             onPress={() => selectType("shift")}
-            style={[
+            style={({ pressed }) => [
               styles.typeButton,
-              captureType === "shift"
-                ? styles.activeTypeButton
+              pressed && !isTransitioning
+                ? styles.typeButtonPressed
                 : null,
             ]}
           >
-            <Text
+            <Animated.Text
               style={[
                 styles.typeButtonText,
-                captureType === "shift"
-                  ? styles.activeTypeButtonText
-                  : null,
+                {
+                  color: shiftTextColor,
+                },
               ]}
             >
               Műszak
-            </Text>
+            </Animated.Text>
           </Pressable>
 
           <Pressable
             accessibilityRole="tab"
+            accessibilityLabel="Tankolás"
             accessibilityState={{
-              selected: captureType === "fuel",
+              selected:
+                captureType === "fuel",
+              disabled: isTransitioning,
             }}
+            disabled={isTransitioning}
             onPress={() => selectType("fuel")}
-            style={[
+            style={({ pressed }) => [
               styles.typeButton,
-              captureType === "fuel"
-                ? styles.activeTypeButton
+              pressed && !isTransitioning
+                ? styles.typeButtonPressed
                 : null,
             ]}
           >
-            <Text
+            <Animated.Text
               style={[
                 styles.typeButtonText,
-                captureType === "fuel"
-                  ? styles.activeTypeButtonText
-                  : null,
+                {
+                  color: fuelTextColor,
+                },
               ]}
             >
               Tankolás
-            </Text>
+            </Animated.Text>
           </Pressable>
         </View>
 
-        <Text style={styles.sectionTitle}>
-          {captureType === "shift"
-            ? "Műszak rögzítése"
-            : "Tankolás rögzítése"}
-        </Text>
+        <FadeInView>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: colors.textPrimary },
+            ]}
+          >
+            {displayedType === "shift"
+              ? "Műszak rögzítése"
+              : "Tankolás rögzítése"}
+          </Text>
 
-        <View
-          style={
-            captureType !== "shift" ? styles.hidden : undefined
-          }
-        >
-          <ShiftForm />
-        </View>
-
-        {fuelOpened ? (
           <View
             style={
-              captureType !== "fuel" ? styles.hidden : undefined
+              displayedType !== "shift"
+                ? styles.hidden
+                : undefined
             }
           >
-            <FuelFillUpForm />
+            <ShiftForm />
           </View>
-        ) : null}
+
+          {fuelOpened ? (
+            <View
+              style={
+                displayedType !== "fuel"
+                  ? styles.hidden
+                  : undefined
+              }
+            >
+              <FuelFillUpForm />
+            </View>
+          ) : null}
+        </FadeInView>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -127,7 +420,6 @@ export function CaptureScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    backgroundColor: "#F6F7FB",
     flex: 1,
   },
   container: {
@@ -142,23 +434,29 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
   title: {
-    color: "#1B1D28",
     fontSize: 26,
     fontWeight: "700",
   },
   subtitle: {
-    color: "#666B7A",
     fontSize: 16,
     lineHeight: 23,
     marginTop: 10,
   },
   typeSelector: {
-    backgroundColor: "#E7E9F0",
     borderRadius: 12,
     flexDirection: "row",
-    gap: 6,
+    gap: SELECTOR_GAP,
     marginBottom: 24,
-    padding: 5,
+    padding: SELECTOR_PADDING,
+    position: "relative",
+  },
+  activeIndicator: {
+    borderRadius: 9,
+    bottom: SELECTOR_PADDING,
+    left: SELECTOR_PADDING,
+    pointerEvents: "none",
+    position: "absolute",
+    top: SELECTOR_PADDING,
   },
   typeButton: {
     alignItems: "center",
@@ -167,20 +465,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: 12,
+    zIndex: 1,
   },
-  activeTypeButton: {
-    backgroundColor: "#365CF5",
+  typeButtonPressed: {
+    opacity: 0.8,
   },
   typeButtonText: {
-    color: "#666B7A",
     fontSize: 15,
     fontWeight: "600",
   },
-  activeTypeButtonText: {
-    color: "#FFFFFF",
-  },
   sectionTitle: {
-    color: "#1B1D28",
     fontSize: 20,
     fontWeight: "700",
     marginBottom: 20,

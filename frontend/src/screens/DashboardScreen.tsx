@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,6 +7,7 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+
 import { getDashboardSummary } from "../api/endpoints";
 import { ApiError } from "../api/client";
 import type {
@@ -15,6 +15,9 @@ import type {
 } from "../types/api";
 import { useAuthStore } from "../store/authStore";
 import { LoglyLogo } from "../components/ui/LoglyLogo";
+import { FadeInView } from "../components/ui/FadeInView";
+import { DashboardSkeleton } from "../components/dashboard/DashboardCardSkeleton";
+import { useTheme } from "../theme/ThemeProvider";
 
 const formatHuf = (amount: number): string =>
   new Intl.NumberFormat("hu-HU", {
@@ -23,20 +26,38 @@ const formatHuf = (amount: number): string =>
     maximumFractionDigits: 0,
   }).format(amount);
 
-const formatNumber = (value: number, digits = 1): string =>
+const formatNumber = (
+  value: number,
+  digits = 1
+): string =>
   new Intl.NumberFormat("hu-HU", {
     maximumFractionDigits: digits,
   }).format(value);
 
 function getCurrentMonthRange() {
   const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const from = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1
+  );
+
+  const to = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0
+  );
 
   const formatDate = (date: Date): string => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
     return `${year}-${month}-${day}`;
   };
 
@@ -55,13 +76,33 @@ function MetricCard({
   value: string;
   valueColor?: string;
 }) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.metricCard}>
-      <Text style={styles.metricLabel}>{label}</Text>
+    <View
+      style={[
+        styles.metricCard,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.metricLabel,
+          { color: colors.textSecondary },
+        ]}
+      >
+        {label}
+      </Text>
+
       <Text
         style={[
           styles.metricValue,
-          valueColor ? { color: valueColor } : null,
+          {
+            color: valueColor ?? colors.textPrimary,
+          },
         ]}
       >
         {value}
@@ -71,23 +112,39 @@ function MetricCard({
 }
 
 export function DashboardScreen() {
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
+  const { colors } = useTheme();
 
-  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(
-    null
+  const user = useAuthStore(
+    (state) => state.user
   );
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const displayName = user?.displayName?.trim() || "Futár";
+  const logout = useAuthStore(
+    (state) => state.logout
+  );
+
+  const [summary, setSummary] =
+    useState<DashboardSummaryResponse | null>(
+      null
+    );
+
+  const [isLoading, setIsLoading] =
+    useState(true);
+
+  const [errorMessage, setErrorMessage] =
+    useState<string | null>(null);
+
+  const displayName =
+    user?.displayName?.trim() || "Futár";
 
   const loadSummary = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const data = await getDashboardSummary(getCurrentMonthRange());
+      const data = await getDashboardSummary(
+        getCurrentMonthRange()
+      );
+
       setSummary(data);
     } catch (error) {
       setSummary(null);
@@ -97,7 +154,9 @@ export function DashboardScreen() {
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage("Nem sikerült betölteni a dashboard adatait.");
+        setErrorMessage(
+          "Nem sikerült betölteni a dashboard adatait."
+        );
       }
     } finally {
       setIsLoading(false);
@@ -117,7 +176,12 @@ export function DashboardScreen() {
   return (
     <ScrollView
       contentContainerStyle={styles.container}
-      style={styles.screen}
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
     >
       <View style={styles.header}>
         <View>
@@ -125,8 +189,24 @@ export function DashboardScreen() {
             width={160}
             style={styles.brandLogo}
           />
-          <Text style={styles.greeting}>Szia, {displayName}!</Text>
-          <Text style={styles.subtitle}>Ez a havi összesítésed.</Text>
+
+          <Text
+            style={[
+              styles.greeting,
+              { color: colors.textPrimary },
+            ]}
+          >
+            Szia, {displayName}!
+          </Text>
+
+          <Text
+            style={[
+              styles.subtitle,
+              { color: colors.textSecondary },
+            ]}
+          >
+            Ez a havi összesítésed.
+          </Text>
         </View>
 
         <Pressable
@@ -134,128 +214,260 @@ export function DashboardScreen() {
           onPress={() => void loadSummary()}
           style={({ pressed }) => [
             styles.refreshButton,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
             pressed ? styles.pressed : null,
           ]}
         >
-          <Text style={styles.refreshButtonText}>Frissítés</Text>
+          <Text
+            style={[
+              styles.refreshButtonText,
+              { color: colors.primary },
+            ]}
+          >
+            Frissítés
+          </Text>
         </Pressable>
       </View>
 
       {isLoading ? (
-        <View style={styles.stateContainer}>
-          <ActivityIndicator color="#365CF5" size="large" />
-          <Text style={styles.stateText}>Dashboard betöltése…</Text>
-        </View>
+        <DashboardSkeleton />
       ) : errorMessage ? (
-        <View style={styles.errorCard}>
-          <Text style={styles.errorTitle}>Nem sikerült betölteni</Text>
-          <Text style={styles.errorMessage}>{errorMessage}</Text>
+        <View
+          style={[
+            styles.errorCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.danger,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.errorTitle,
+              { color: colors.danger },
+            ]}
+          >
+            Nem sikerült betölteni
+          </Text>
+
+          <Text
+            style={[
+              styles.errorMessage,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {errorMessage}
+          </Text>
 
           <Pressable
             accessibilityRole="button"
             onPress={() => void loadSummary()}
-            style={styles.retryButton}
+            style={[
+              styles.retryButton,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.danger,
+              },
+            ]}
           >
-            <Text style={styles.retryButtonText}>Újrapróbálom</Text>
+            <Text
+              style={[
+                styles.retryButtonText,
+                { color: colors.danger },
+              ]}
+            >
+              Újrapróbálom
+            </Text>
           </Pressable>
         </View>
       ) : summary ? (
-        <>
-          <View style={styles.profitCard}>
-            <Text style={styles.profitLabel}>Havi nettó eredmény</Text>
+        <FadeInView translateY={0}>
+          <View
+            style={[
+              styles.profitCard,
+              {
+                backgroundColor: colors.primary,
+              },
+            ]}
+          >
+            <Text style={styles.profitLabel}>
+              Havi nettó eredmény
+            </Text>
+
             <Text
               style={[
                 styles.profitValue,
-                summary.netProfit < 0 ? styles.negativeValue : null,
+                summary.netProfit < 0
+                  ? styles.negativeValue
+                  : null,
               ]}
             >
               {formatHuf(summary.netProfit)}
             </Text>
+
             <Text style={styles.periodText}>
               {summary.from} – {summary.to}
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pénzügyi összesítés</Text>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.textPrimary },
+              ]}
+            >
+              Pénzügyi összesítés
+            </Text>
 
             <View style={styles.metricsGrid}>
               <MetricCard
                 label="Bevétel"
-                value={formatHuf(summary.totalRevenue)}
-                valueColor="#16803C"
+                value={formatHuf(
+                  summary.totalRevenue
+                )}
+                valueColor={colors.success}
               />
+
               <MetricCard
                 label="Összes kiadás"
-                value={formatHuf(summary.totalExpense)}
-                valueColor="#D92D20"
+                value={formatHuf(
+                  summary.totalExpense
+                )}
+                valueColor={colors.danger}
               />
+
               <MetricCard
                 label="Üzemanyag"
-                value={formatHuf(summary.totalFuelCost)}
+                value={formatHuf(
+                  summary.totalFuelCost
+                )}
               />
+
               <MetricCard
                 label="Munkával kapcsolatos kiadás"
-                value={formatHuf(summary.totalWorkExpense)}
+                value={formatHuf(
+                  summary.totalWorkExpense
+                )}
               />
+
               <MetricCard
                 label="Egyéb kiadás"
-                value={formatHuf(summary.totalOtherExpense)}
+                value={formatHuf(
+                  summary.totalOtherExpense
+                )}
               />
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Munka összesen</Text>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: colors.textPrimary },
+              ]}
+            >
+              Munka összesen
+            </Text>
 
             <View style={styles.metricsGrid}>
               <MetricCard
                 label="Ledolgozott idő"
-                value={`${Math.floor(summary.totalWorkedMinutes / 60)} óra ${summary.totalWorkedMinutes % 60
+                value={`${Math.floor(
+                  summary.totalWorkedMinutes /
+                  60
+                )
+                  } óra ${summary.totalWorkedMinutes %
+                  60
                   } perc`}
               />
+
               <MetricCard
                 label="Megtett út"
-                value={`${formatNumber(summary.totalDrivenKilometers, 1)} km`}
+                value={`${formatNumber(
+                  summary.totalDrivenKilometers,
+                  1
+                )} km`}
               />
+
               <MetricCard
                 label="Kiszállítások"
-                value={formatNumber(summary.totalDeliveredOrders, 0)}
+                value={formatNumber(
+                  summary.totalDeliveredOrders,
+                  0
+                )}
               />
+
               <MetricCard
                 label="Bevétel óránként"
-                value={formatHuf(summary.revenuePerHour)}
+                value={formatHuf(
+                  summary.revenuePerHour
+                )}
               />
+
               <MetricCard
                 label="Nettó óránként"
-                value={formatHuf(summary.profitPerHour)}
+                value={formatHuf(
+                  summary.profitPerHour
+                )}
               />
+
               <MetricCard
                 label="Bevétel kiszállításonként"
-                value={formatHuf(summary.revenuePerOrder)}
+                value={formatHuf(
+                  summary.revenuePerOrder
+                )}
               />
+
               <MetricCard
                 label="Nettó kiszállításonként"
-                value={formatHuf(summary.profitPerOrder)}
+                value={formatHuf(
+                  summary.profitPerOrder
+                )}
               />
+
               <MetricCard
                 label="Teljes költség kilométerenként"
-                value={formatHuf(summary.totalCostPerKilometer)}
+                value={formatHuf(
+                  summary.totalCostPerKilometer
+                )}
               />
             </View>
           </View>
 
           {!summary.includesFuelCost ? (
-            <Text style={styles.note}>
-              A nettó eredmény nem tartalmaz üzemanyagköltséget, mert ehhez
-              még nincs elegendő tankolási adat.
+            <Text
+              style={[
+                styles.note,
+                { color: colors.textSecondary },
+              ]}
+            >
+              A nettó eredmény nem tartalmaz
+              üzemanyagköltséget, mert ehhez még
+              nincs elegendő tankolási adat.
             </Text>
           ) : null}
-        </>
+        </FadeInView>
       ) : (
-        <View style={styles.stateContainer}>
-          <Text style={styles.stateText}>
-            Ehhez az időszakhoz még nincs megjeleníthető adat.
+        <View
+          style={[
+            styles.stateContainer,
+            {
+              backgroundColor: colors.surface,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.stateText,
+              { color: colors.textSecondary },
+            ]}
+          >
+            Ehhez az időszakhoz még nincs
+            megjeleníthető adat.
           </Text>
         </View>
       )}
@@ -265,10 +477,20 @@ export function DashboardScreen() {
         onPress={handleLogout}
         style={({ pressed }) => [
           styles.logoutButton,
+          {
+            borderColor: colors.danger,
+          },
           pressed ? styles.pressed : null,
         ]}
       >
-        <Text style={styles.logoutButtonText}>Kijelentkezés</Text>
+        <Text
+          style={[
+            styles.logoutButtonText,
+            { color: colors.danger },
+          ]}
+        >
+          Kijelentkezés
+        </Text>
       </Pressable>
     </ScrollView>
   );
@@ -277,15 +499,14 @@ export function DashboardScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F6F7FB",
   },
   container: {
+    alignSelf: "center",
     flexGrow: 1,
+    maxWidth: 1100,
     padding: 24,
     paddingBottom: 36,
     width: "100%",
-    maxWidth: 1100,
-    alignSelf: "center",
   },
   header: {
     alignItems: "center",
@@ -297,19 +518,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   greeting: {
-    color: "#1B1D28",
     fontSize: 28,
     fontWeight: "700",
   },
   subtitle: {
-    color: "#666B7A",
     fontSize: 15,
     marginTop: 6,
   },
   refreshButton: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D9DCE5",
     borderRadius: 10,
     borderWidth: 1,
     justifyContent: "center",
@@ -317,12 +534,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   refreshButtonText: {
-    color: "#365CF5",
     fontSize: 14,
     fontWeight: "600",
   },
   profitCard: {
-    backgroundColor: "#365CF5",
     borderRadius: 18,
     marginBottom: 26,
     padding: 22,
@@ -350,7 +565,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    color: "#1B1D28",
     fontSize: 19,
     fontWeight: "700",
     marginBottom: 12,
@@ -361,8 +575,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   metricCard: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E7E9F0",
     borderRadius: 14,
     borderWidth: 1,
     flexBasis: 220,
@@ -371,52 +583,41 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   metricLabel: {
-    color: "#666B7A",
     fontSize: 13,
     lineHeight: 18,
   },
   metricValue: {
-    color: "#1B1D28",
     fontSize: 19,
     fontWeight: "700",
     marginTop: 7,
   },
   stateContainer: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     justifyContent: "center",
     minHeight: 180,
     padding: 24,
   },
   stateText: {
-    color: "#666B7A",
     fontSize: 15,
-    marginTop: 12,
     textAlign: "center",
   },
   errorCard: {
-    backgroundColor: "#FFF4F2",
-    borderColor: "#F5C2BC",
     borderRadius: 14,
     borderWidth: 1,
     padding: 18,
   },
   errorTitle: {
-    color: "#9E251B",
     fontSize: 17,
     fontWeight: "700",
   },
   errorMessage: {
-    color: "#6B2923",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
   },
   retryButton: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#D92D20",
     borderRadius: 9,
     borderWidth: 1,
     marginTop: 14,
@@ -424,19 +625,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   retryButtonText: {
-    color: "#D92D20",
     fontSize: 14,
     fontWeight: "700",
   },
   note: {
-    color: "#666B7A",
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 20,
   },
   logoutButton: {
     alignItems: "center",
-    borderColor: "#D92D20",
     borderRadius: 12,
     borderWidth: 1,
     justifyContent: "center",
@@ -444,7 +642,6 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   logoutButtonText: {
-    color: "#D92D20",
     fontSize: 15,
     fontWeight: "700",
   },

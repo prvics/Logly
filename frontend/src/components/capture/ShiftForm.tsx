@@ -1,31 +1,30 @@
 import { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
     StyleSheet,
     Text,
     View,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+
 import { ApiError } from "../../api/client";
 import {
     createShift,
+    getUserCompanies,
     getVehicles,
 } from "../../api/endpoints";
-import {
-    getUserCompanies,
-} from "../../api/userCompanies";
-import type {
-    UserCompanyResponse,
-} from "../../api/userCompanies";
 import type {
     CreateShiftRequest,
+    UserCompanyResponse,
     VehicleResponse,
 } from "../../types/api";
-import { FormField } from "../ui/FormField";
-import { PrimaryButton } from "../ui/PrimaryButton";
-import { FeedbackMessage } from "../ui/FeedbackMessage";
+
+import { useTheme } from "../../theme/ThemeProvider";
 import { ChoiceField } from "../ui/ChoiceField";
 import { DateField } from "../ui/DateField";
+import { FeedbackMessage } from "../ui/FeedbackMessage";
+import { FormField } from "../ui/FormField";
+import { PrimaryButton } from "../ui/PrimaryButton";
+import { ShiftFormSkeleton } from "./ShiftFormSkeleton";
 
 type FormValues = {
     userCompanyId: string;
@@ -41,6 +40,7 @@ type FormValues = {
 };
 
 type FieldName = keyof FormValues;
+
 type FieldErrors = Partial<Record<FieldName, string>>;
 
 function todayLocal(): string {
@@ -106,24 +106,38 @@ function parseNonNegative(
 }
 
 export function ShiftForm() {
+    const { colors } = useTheme();
+
     const submittingRef = useRef(false);
 
     const [companies, setCompanies] =
         useState<UserCompanyResponse[]>([]);
+
     const [vehicles, setVehicles] =
         useState<VehicleResponse[]>([]);
 
-    const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+    const [isLoadingOptions, setIsLoadingOptions] =
+        useState(true);
+
     const [optionsError, setOptionsError] =
         useState<string | null>(null);
+
     const [reloadKey, setReloadKey] = useState(0);
 
-    const [form, setForm] = useState<FormValues>(initialValues);
-    const [errors, setErrors] = useState<FieldErrors>({});
-    const [formError, setFormError] = useState<string | null>(null);
+    const [form, setForm] =
+        useState<FormValues>(initialValues);
+
+    const [errors, setErrors] =
+        useState<FieldErrors>({});
+
+    const [formError, setFormError] =
+        useState<string | null>(null);
+
     const [successMessage, setSuccessMessage] =
         useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [isSubmitting, setIsSubmitting] =
+        useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -135,7 +149,7 @@ export function ShiftForm() {
             async function loadOptions() {
                 try {
                     const [companyData, vehicleData] = await Promise.all([
-                        getUserCompanies(),
+                        getUserCompanies(true),
                         getVehicles(),
                     ]);
 
@@ -143,10 +157,42 @@ export function ShiftForm() {
                         return;
                     }
 
-                    setCompanies(companyData);
-                    setVehicles(
-                        vehicleData.filter((vehicle) => vehicle.isActive)
+                    const activeCompanies = companyData.filter(
+                        (company) => company.isActive
                     );
+
+                    const activeVehicles = vehicleData.filter(
+                        (vehicle) => vehicle.isActive
+                    );
+
+                    setCompanies(activeCompanies);
+                    setVehicles(activeVehicles);
+
+                    setForm((current) => {
+                        const companyStillAvailable = activeCompanies.some(
+                            (company) => company.id === current.userCompanyId
+                        );
+
+                        const vehicleStillAvailable = activeVehicles.some(
+                            (vehicle) => vehicle.id === current.vehicleId
+                        );
+
+                        return {
+                            ...current,
+                            userCompanyId: companyStillAvailable
+                                ? current.userCompanyId
+                                : "",
+                            vehicleId: vehicleStillAvailable
+                                ? current.vehicleId
+                                : "",
+                        };
+                    });
+
+                    setErrors((current) => ({
+                        ...current,
+                        userCompanyId: undefined,
+                        vehicleId: undefined,
+                    }));
                 } catch (error) {
                     if (!active) {
                         return;
@@ -191,14 +237,23 @@ export function ShiftForm() {
         const nextErrors: FieldErrors = {};
 
         const company = companies.find(
-            (item) => item.id === form.userCompanyId
+            (item) =>
+                item.id === form.userCompanyId &&
+                item.isActive
         );
 
         if (!company) {
-            nextErrors.userCompanyId = "Válassz céget.";
+            nextErrors.userCompanyId =
+                "Válassz aktív saját céges kapcsolatot.";
         }
 
-        if (!vehicles.some((item) => item.id === form.vehicleId)) {
+        const vehicle = vehicles.find(
+            (item) =>
+                item.id === form.vehicleId &&
+                item.isActive
+        );
+
+        if (!vehicle) {
             nextErrors.vehicleId = "Válassz aktív járművet.";
         }
 
@@ -212,7 +267,7 @@ export function ShiftForm() {
         if (company && validDate) {
             if (
                 form.date < company.startedOn ||
-                (company.endedOn !== null &&
+                (company.endedOn != null &&
                     form.date > company.endedOn)
             ) {
                 nextErrors.date =
@@ -224,18 +279,23 @@ export function ShiftForm() {
             form.workedHours,
             true
         );
+
         const workedMinutes = parseNonNegative(
             form.workedMinutes,
             true
         );
+
         const drivenKilometers = parseNonNegative(
             form.drivenKilometers
         );
+
         const revenue = parseNonNegative(form.revenue);
+
         const deliveredOrders = parseNonNegative(
             form.deliveredOrders,
             true
         );
+
         const workExpense = parseNonNegative(form.workExpense);
 
         if (workedHours === null) {
@@ -268,6 +328,11 @@ export function ShiftForm() {
                 "Adj meg egy nem negatív kiadást.";
         }
 
+        if (form.note.trim().length > 500) {
+            nextErrors.note =
+                "A megjegyzés legfeljebb 500 karakter lehet.";
+        }
+
         setErrors(nextErrors);
 
         if (
@@ -297,7 +362,11 @@ export function ShiftForm() {
     }
 
     async function handleSubmit() {
-        if (submittingRef.current) {
+        if (
+            submittingRef.current ||
+            isLoadingOptions ||
+            optionsError
+        ) {
             return;
         }
 
@@ -324,6 +393,7 @@ export function ShiftForm() {
             });
 
             setErrors({});
+
             setSuccessMessage(
                 "A műszakot elmentettük. Az Áttekintés fülön ellenőrizheted az összesítést."
             );
@@ -340,6 +410,7 @@ export function ShiftForm() {
                 }
 
                 setErrors(fieldErrors);
+
                 setFormError(
                     Object.keys(fieldErrors).length > 0
                         ? "Ellenőrizd a jelölt mezőket."
@@ -358,10 +429,10 @@ export function ShiftForm() {
 
     if (isLoadingOptions) {
         return (
-            <View style={styles.loading}>
-                <ActivityIndicator color="#365CF5" size="large" />
-                <Text style={styles.help}>Cégek és járművek betöltése…</Text>
-            </View>
+            <ShiftFormSkeleton
+                companyCount={companies.length || 3}
+                vehicleCount={vehicles.length || 1}
+            />
         );
     }
 
@@ -372,7 +443,9 @@ export function ShiftForm() {
 
                 <PrimaryButton
                     title="Újrapróbálom"
-                    onPress={() => setReloadKey((value) => value + 1)}
+                    onPress={() =>
+                        setReloadKey((value) => value + 1)
+                    }
                 />
             </View>
         );
@@ -383,7 +456,7 @@ export function ShiftForm() {
             <FeedbackMessage
                 message={
                     companies.length === 0
-                        ? "Műszak rögzítéséhez előbb céges kapcsolatot kell hozzáadnod. Jelenleg nincs elérhető saját céged."
+                        ? "Műszak rögzítéséhez legalább egy aktív saját céges kapcsolat szükséges. A Profil oldalon hozzáadhatsz vagy újraaktiválhatsz egyet."
                         : "Műszak rögzítéséhez legalább egy aktív jármű szükséges."
                 }
             />
@@ -398,11 +471,13 @@ export function ShiftForm() {
                     value: company.id,
                     label: company.deliveryCompanyName,
                     description:
-                        `${company.startedOn} – ${company.endedOn ?? "nincs záródátum"}` +
-                        (company.isActive ? "" : " · Inaktív kapcsolat"),
+                        `${company.startedOn} – ` +
+                        `${company.endedOn ?? "nincs záródátum"}`,
                 }))}
                 value={form.userCompanyId}
-                onChange={(value) => updateField("userCompanyId", value)}
+                onChange={(value) =>
+                    updateField("userCompanyId", value)
+                }
                 disabled={isSubmitting}
                 error={errors.userCompanyId}
             />
@@ -414,7 +489,9 @@ export function ShiftForm() {
                     label: vehicle.name,
                 }))}
                 value={form.vehicleId}
-                onChange={(value) => updateField("vehicleId", value)}
+                onChange={(value) =>
+                    updateField("vehicleId", value)
+                }
                 disabled={isSubmitting}
                 error={errors.vehicleId}
             />
@@ -462,7 +539,9 @@ export function ShiftForm() {
                 placeholder="Például: 28934"
                 keyboardType="decimal-pad"
                 value={form.revenue}
-                onChangeText={(value) => updateField("revenue", value)}
+                onChangeText={(value) =>
+                    updateField("revenue", value)
+                }
                 editable={!isSubmitting}
                 error={errors.revenue}
             />
@@ -503,7 +582,12 @@ export function ShiftForm() {
                 error={errors.workExpense}
             />
 
-            <Text style={styles.help}>
+            <Text
+                style={[
+                    styles.help,
+                    { color: colors.textSecondary },
+                ]}
+            >
                 Ugyanazt a kiadást ne rögzítsd itt és külön kiadásként is,
                 mert a jelenlegi dashboard mindkettőt összeadja.
             </Text>
@@ -513,7 +597,9 @@ export function ShiftForm() {
                 placeholder="Nem kötelező"
                 multiline
                 value={form.note}
-                onChangeText={(value) => updateField("note", value)}
+                onChangeText={(value) =>
+                    updateField("note", value)
+                }
                 editable={!isSubmitting}
                 error={errors.note}
             />
@@ -550,13 +636,7 @@ const styles = StyleSheet.create({
         flex: 1,
         minWidth: 0,
     },
-    loading: {
-        alignItems: "center",
-        gap: 12,
-        paddingVertical: 36,
-    },
     help: {
-        color: "#666B7A",
         fontSize: 13,
         lineHeight: 19,
     },

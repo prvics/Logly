@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import {
-    ActivityIndicator,
     StyleSheet,
     Switch,
     Text,
@@ -18,11 +17,13 @@ import type {
     VehicleResponse,
 } from "../../types/api";
 
+import { useTheme } from "../../theme/ThemeProvider";
 import { ChoiceField } from "../ui/ChoiceField";
+import { DateField } from "../ui/DateField";
 import { FeedbackMessage } from "../ui/FeedbackMessage";
 import { FormField } from "../ui/FormField";
 import { PrimaryButton } from "../ui/PrimaryButton";
-import { DateField } from "../ui/DateField";
+import { FuelFillUpFormSkeleton } from "./FuelFillUpFormSkeleton";
 
 type FormValues = {
     vehicleId: string;
@@ -88,22 +89,35 @@ function parseNonNegative(value: string): number | null {
 }
 
 export function FuelFillUpForm() {
+    const { colors } = useTheme();
+
     const submittingRef = useRef(false);
 
-    const [vehicles, setVehicles] = useState<VehicleResponse[]>([]);
-    const [isLoadingVehicles, setIsLoadingVehicles] = useState(true);
+    const [vehicles, setVehicles] =
+        useState<VehicleResponse[]>([]);
+
+    const [isLoadingVehicles, setIsLoadingVehicles] =
+        useState(true);
+
     const [vehiclesError, setVehiclesError] =
         useState<string | null>(null);
+
     const [reloadKey, setReloadKey] = useState(0);
 
-    const [form, setForm] = useState<FormValues>(initialValues);
-    const [errors, setErrors] = useState<FieldErrors>({});
+    const [form, setForm] =
+        useState<FormValues>(initialValues);
 
-    const [formError, setFormError] = useState<string | null>(null);
+    const [errors, setErrors] =
+        useState<FieldErrors>({});
+
+    const [formError, setFormError] =
+        useState<string | null>(null);
+
     const [successMessage, setSuccessMessage] =
         useState<string | null>(null);
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmitting, setIsSubmitting] =
+        useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -169,7 +183,11 @@ export function FuelFillUpForm() {
     function buildRequest(): CreateFuelFillUpRequest | null {
         const nextErrors: FieldErrors = {};
 
-        if (!vehicles.some((vehicle) => vehicle.id === form.vehicleId)) {
+        if (
+            !vehicles.some(
+                (vehicle) => vehicle.id === form.vehicleId
+            )
+        ) {
             nextErrors.vehicleId = "Válassz aktív járművet.";
         }
 
@@ -282,13 +300,9 @@ export function FuelFillUpForm() {
 
     if (isLoadingVehicles) {
         return (
-            <View style={styles.loading}>
-                <ActivityIndicator color="#365CF5" size="large" />
-
-                <Text style={styles.help}>
-                    Járművek betöltése…
-                </Text>
-            </View>
+            <FuelFillUpFormSkeleton
+                vehicleCount={vehicles.length || 1}
+            />
         );
     }
 
@@ -299,7 +313,9 @@ export function FuelFillUpForm() {
 
                 <PrimaryButton
                     title="Újrapróbálom"
-                    onPress={() => setReloadKey((value) => value + 1)}
+                    onPress={() =>
+                        setReloadKey((value) => value + 1)
+                    }
                 />
             </View>
         );
@@ -322,7 +338,9 @@ export function FuelFillUpForm() {
                     label: vehicle.name,
                 }))}
                 value={form.vehicleId}
-                onChange={(value) => updateField("vehicleId", value)}
+                onChange={(value) =>
+                    updateField("vehicleId", value)
+                }
                 disabled={isSubmitting}
                 error={errors.vehicleId}
             />
@@ -352,7 +370,9 @@ export function FuelFillUpForm() {
                 placeholder="Például: 35,5"
                 keyboardType="decimal-pad"
                 value={form.liters}
-                onChangeText={(value) => updateField("liters", value)}
+                onChangeText={(value) =>
+                    updateField("liters", value)
+                }
                 editable={!isSubmitting}
                 error={errors.liters}
             />
@@ -369,13 +389,31 @@ export function FuelFillUpForm() {
                 error={errors.totalPrice}
             />
 
-            <View style={styles.switchRow}>
+            <View
+                style={[
+                    styles.switchRow,
+                    {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                    },
+                ]}
+            >
                 <View style={styles.switchText}>
-                    <Text style={styles.switchLabel}>
+                    <Text
+                        style={[
+                            styles.switchLabel,
+                            { color: colors.textPrimary },
+                        ]}
+                    >
                         Tele tank
                     </Text>
 
-                    <Text style={styles.help}>
+                    <Text
+                        style={[
+                            styles.help,
+                            { color: colors.textSecondary },
+                        ]}
+                    >
                         Kapcsold be, ha teljesen feltöltötted a tankot.
                     </Text>
                 </View>
@@ -388,15 +426,20 @@ export function FuelFillUpForm() {
                         updateField("isFullTank", value)
                     }
                     trackColor={{
-                        false: "#D9DCE5",
-                        true: "#365CF5",
+                        false: colors.switchTrackOff,
+                        true: colors.switchTrackOn,
                     }}
-                    thumbColor="#FFFFFF"
+                    thumbColor={colors.switchThumb}
                 />
             </View>
 
             {errors.isFullTank ? (
-                <Text style={styles.fieldError}>
+                <Text
+                    style={[
+                        styles.fieldError,
+                        { color: colors.danger },
+                    ]}
+                >
                     {errors.isFullTank}
                 </Text>
             ) : null}
@@ -406,12 +449,19 @@ export function FuelFillUpForm() {
                 placeholder="Nem kötelező"
                 multiline
                 value={form.note}
-                onChangeText={(value) => updateField("note", value)}
+                onChangeText={(value) =>
+                    updateField("note", value)
+                }
                 editable={!isSubmitting}
                 error={errors.note}
             />
 
-            <Text style={styles.help}>
+            <Text
+                style={[
+                    styles.help,
+                    { color: colors.textSecondary },
+                ]}
+            >
                 A tankolás árát ne rögzítsd külön kiadásként vagy
                 műszakkiadásként is, mert a jelenlegi dashboard
                 összeadja ezeket.
@@ -441,20 +491,12 @@ const styles = StyleSheet.create({
     form: {
         gap: 18,
     },
-    loading: {
-        alignItems: "center",
-        gap: 12,
-        paddingVertical: 36,
-    },
     help: {
-        color: "#666B7A",
         fontSize: 13,
         lineHeight: 19,
     },
     switchRow: {
         alignItems: "center",
-        backgroundColor: "#FFFFFF",
-        borderColor: "#D9DCE5",
         borderRadius: 12,
         borderWidth: 1,
         flexDirection: "row",
@@ -467,12 +509,10 @@ const styles = StyleSheet.create({
         gap: 5,
     },
     switchLabel: {
-        color: "#2A2D3A",
         fontSize: 14,
         fontWeight: "600",
     },
     fieldError: {
-        color: "#D92D20",
         fontSize: 13,
         lineHeight: 18,
     },

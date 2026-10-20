@@ -1,10 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
   View,
 } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+  type Theme,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
@@ -17,7 +22,9 @@ import {
 import { DashboardScreen } from "../screens/DashboardScreen";
 import { CaptureScreen } from "../screens/CaptureScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
+
 import { useAuthStore } from "../store/authStore";
+import { useTheme } from "../theme/ThemeProvider";
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -35,18 +42,24 @@ type AppTabParamList = {
 const AuthStack =
   createNativeStackNavigator<AuthStackParamList>();
 
-const Tabs = createBottomTabNavigator<AppTabParamList>();
+const Tabs =
+  createBottomTabNavigator<AppTabParamList>();
 
 function AuthNavigator() {
+  const { colors } = useTheme();
+
   return (
     <AuthStack.Navigator
       initialRouteName="Login"
       screenOptions={{
         headerShadowVisible: false,
         headerStyle: {
-          backgroundColor: "#F6F7FB",
+          backgroundColor: colors.background,
         },
-        headerTintColor: "#1B1D28",
+        headerTintColor: colors.textPrimary,
+        contentStyle: {
+          backgroundColor: colors.background,
+        },
       }}
     >
       <AuthStack.Screen
@@ -85,20 +98,22 @@ function AuthNavigator() {
 }
 
 function AppTabs() {
+  const { colors } = useTheme();
+
   return (
     <Tabs.Navigator
       initialRouteName="Dashboard"
       screenOptions={{
         headerShadowVisible: false,
         headerStyle: {
-          backgroundColor: "#F6F7FB",
+          backgroundColor: colors.background,
         },
-        headerTintColor: "#1B1D28",
-        tabBarActiveTintColor: "#365CF5",
-        tabBarInactiveTintColor: "#777B88",
+        headerTintColor: colors.textPrimary,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#E7E9F0",
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
         },
       }}
     >
@@ -136,14 +151,28 @@ function AppTabs() {
 }
 
 function LoadingScreen() {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator color="#365CF5" size="large" />
+    <View
+      style={[
+        styles.loadingContainer,
+        {
+          backgroundColor: colors.background,
+        },
+      ]}
+    >
+      <ActivityIndicator
+        color={colors.primary}
+        size="large"
+      />
     </View>
   );
 }
 
 export function AppNavigator() {
+  const { colors, mode } = useTheme();
+
   const isAuthenticated = useAuthStore(
     (state) => state.isAuthenticated
   );
@@ -156,6 +185,25 @@ export function AppNavigator() {
     (state) => state.restoreSession
   );
 
+  const navigationTheme = useMemo<Theme>(() => {
+    const baseTheme =
+      mode === "dark" ? DarkTheme : DefaultTheme;
+
+    return {
+      ...baseTheme,
+      dark: mode === "dark",
+      colors: {
+        ...baseTheme.colors,
+        primary: colors.primary,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.textPrimary,
+        border: colors.border,
+        notification: colors.danger,
+      },
+    };
+  }, [colors, mode]);
+
   useEffect(() => {
     void restoreSession();
   }, [restoreSession]);
@@ -165,8 +213,12 @@ export function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      {isAuthenticated ? <AppTabs /> : <AuthNavigator />}
+    <NavigationContainer theme={navigationTheme}>
+      {isAuthenticated ? (
+        <AppTabs />
+      ) : (
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 }
@@ -174,7 +226,6 @@ export function AppNavigator() {
 const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: "center",
-    backgroundColor: "#F6F7FB",
     flex: 1,
     justifyContent: "center",
   },

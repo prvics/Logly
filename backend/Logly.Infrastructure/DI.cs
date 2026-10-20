@@ -2,6 +2,8 @@
 using Logly.Application.Auth.Services;
 using Logly.Application.Dashboard.Repositories;
 using Logly.Application.Dashboard.Services;
+using Logly.Application.DeliveryCompanies.Repositories;
+using Logly.Application.DeliveryCompanies.Services;
 using Logly.Application.Email;
 using Logly.Application.Expenses.Repositories;
 using Logly.Application.Expenses.Services;
@@ -15,6 +17,7 @@ using Logly.Application.Vehicles.Repositories;
 using Logly.Application.Vehicles.Services;
 using Logly.Infrastructure.Auth;
 using Logly.Infrastructure.Dashboard;
+using Logly.Infrastructure.DeliveryCompanies;
 using Logly.Infrastructure.Email;
 using Logly.Infrastructure.Expenses;
 using Logly.Infrastructure.FuelFillUps;
@@ -89,6 +92,9 @@ public static class DI
 
         services.AddScoped<IUserCompanyRepository, UserCompanyRepository>();
         services.AddScoped<IUserCompanyService, UserCompanyService>();
+        
+        services.AddScoped<IDeliveryCompanyRepository, DeliveryCompanyRepository>();
+        services.AddScoped<IDeliveryCompanyService, DeliveryCompanyService>();
         return services;
     }
 }

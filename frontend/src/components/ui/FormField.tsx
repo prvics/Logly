@@ -6,6 +6,8 @@ import {
 } from "react-native";
 import type { TextInputProps } from "react-native";
 
+import { useTheme } from "../../theme/ThemeProvider";
+
 type Props = TextInputProps & {
     label: string;
     error?: string | null;
@@ -15,20 +17,43 @@ export function FormField({
     label,
     error,
     style,
+    placeholderTextColor,
+    keyboardAppearance,
     ...inputProps
 }: Props) {
+    const { colors, mode } = useTheme();
+
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
+            <Text
+                style={[
+                    styles.label,
+                    { color: colors.textPrimary },
+                ]}
+            >
+                {label}
+            </Text>
 
             <TextInput
                 accessibilityLabel={label}
-                placeholderTextColor="#8A8A8A"
                 {...inputProps}
+                placeholderTextColor={
+                    placeholderTextColor ?? colors.textSecondary
+                }
+                keyboardAppearance={keyboardAppearance ?? mode}
+                selectionColor={colors.primary}
                 style={[
                     styles.input,
-                    inputProps.multiline ? styles.multiline : null,
-                    error ? styles.inputError : null,
+                    {
+                        backgroundColor: colors.surface,
+                        borderColor: error
+                            ? colors.danger
+                            : colors.border,
+                        color: colors.textPrimary,
+                    },
+                    inputProps.multiline
+                        ? styles.multiline
+                        : null,
                     style,
                 ]}
             />
@@ -36,7 +61,10 @@ export function FormField({
             {error ? (
                 <Text
                     accessibilityLiveRegion="polite"
-                    style={styles.error}
+                    style={[
+                        styles.error,
+                        { color: colors.danger },
+                    ]}
                 >
                     {error}
                 </Text>
@@ -50,16 +78,12 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     label: {
-        color: "#2A2D3A",
         fontSize: 14,
         fontWeight: "600",
     },
     input: {
-        backgroundColor: "#FFFFFF",
-        borderColor: "#D9DCE5",
         borderRadius: 12,
         borderWidth: 1,
-        color: "#1B1D28",
         fontSize: 16,
         minHeight: 52,
         paddingHorizontal: 16,
@@ -69,11 +93,7 @@ const styles = StyleSheet.create({
         minHeight: 100,
         textAlignVertical: "top",
     },
-    inputError: {
-        borderColor: "#D92D20",
-    },
     error: {
-        color: "#D92D20",
         fontSize: 13,
         lineHeight: 18,
     },

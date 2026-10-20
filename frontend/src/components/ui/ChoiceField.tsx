@@ -5,6 +5,8 @@ import {
     View,
 } from "react-native";
 
+import { useTheme } from "../../theme/ThemeProvider";
+
 export type ChoiceOption = {
     value: string;
     label: string;
@@ -28,9 +30,18 @@ export function ChoiceField({
     disabled = false,
     error,
 }: Props) {
+    const { colors } = useTheme();
+
     return (
         <View style={styles.container}>
-            <Text style={styles.label}>{label}</Text>
+            <Text
+                style={[
+                    styles.label,
+                    { color: colors.textPrimary },
+                ]}
+            >
+                {label}
+            </Text>
 
             {options.map((option) => {
                 const selected = option.value === value;
@@ -47,15 +58,28 @@ export function ChoiceField({
                         onPress={() => onChange(option.value)}
                         style={({ pressed }) => [
                             styles.option,
-                            selected ? styles.selectedOption : null,
-                            pressed && !disabled ? styles.pressed : null,
+                            {
+                                backgroundColor: selected
+                                    ? colors.surfaceMuted
+                                    : colors.surface,
+                                borderColor: selected
+                                    ? colors.primary
+                                    : colors.border,
+                            },
+                            pressed && !disabled
+                                ? styles.pressed
+                                : null,
                             disabled ? styles.disabled : null,
                         ]}
                     >
                         <Text
                             style={[
                                 styles.optionLabel,
-                                selected ? styles.selectedLabel : null,
+                                {
+                                    color: selected
+                                        ? colors.primary
+                                        : colors.textPrimary,
+                                },
                             ]}
                         >
                             {selected ? "● " : "○ "}
@@ -63,7 +87,12 @@ export function ChoiceField({
                         </Text>
 
                         {option.description ? (
-                            <Text style={styles.description}>
+                            <Text
+                                style={[
+                                    styles.description,
+                                    { color: colors.textSecondary },
+                                ]}
+                            >
                                 {option.description}
                             </Text>
                         ) : null}
@@ -74,7 +103,10 @@ export function ChoiceField({
             {error ? (
                 <Text
                     accessibilityLiveRegion="polite"
-                    style={styles.error}
+                    style={[
+                        styles.error,
+                        { color: colors.danger },
+                    ]}
                 >
                     {error}
                 </Text>
@@ -88,38 +120,25 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     label: {
-        color: "#2A2D3A",
         fontSize: 14,
         fontWeight: "600",
     },
     option: {
-        backgroundColor: "#FFFFFF",
-        borderColor: "#D9DCE5",
         borderRadius: 12,
         borderWidth: 1,
         minHeight: 52,
         padding: 14,
     },
-    selectedOption: {
-        backgroundColor: "#EEF2FF",
-        borderColor: "#365CF5",
-    },
     optionLabel: {
-        color: "#1B1D28",
         fontSize: 15,
         fontWeight: "600",
     },
-    selectedLabel: {
-        color: "#365CF5",
-    },
     description: {
-        color: "#666B7A",
         fontSize: 12,
         lineHeight: 18,
         marginTop: 5,
     },
     error: {
-        color: "#D92D20",
         fontSize: 13,
     },
     pressed: {
