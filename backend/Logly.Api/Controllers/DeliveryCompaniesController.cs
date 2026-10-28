@@ -1,4 +1,8 @@
-﻿using Logly.Application.DeliveryCompanies.DTOs;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Logly.Application.DeliveryCompanies.DTOs;
 using Logly.Application.DeliveryCompanies.Exceptions;
 using Logly.Application.DeliveryCompanies.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,8 +16,7 @@ namespace Logly.Api.Controllers;
 [Authorize]
 public sealed class DeliveryCompaniesController : ControllerBase
 {
-    private readonly IDeliveryCompanyService
-        _deliveryCompanyService;
+    private readonly IDeliveryCompanyService _deliveryCompanyService;
 
     public DeliveryCompaniesController(
         IDeliveryCompanyService deliveryCompanyService)
@@ -33,6 +36,7 @@ public sealed class DeliveryCompaniesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<DeliveryCompanyResponse>> Create(
         [FromBody] CreateDeliveryCompanyRequest request,
         CancellationToken cancellationToken)
@@ -46,6 +50,10 @@ public sealed class DeliveryCompaniesController : ControllerBase
             return StatusCode(
                 StatusCodes.Status201Created,
                 response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
         }
         catch (DeliveryCompanyAlreadyExistsException error)
         {

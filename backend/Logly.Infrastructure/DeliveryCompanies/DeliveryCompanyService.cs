@@ -1,4 +1,5 @@
-﻿using Logly.Application.DeliveryCompanies.DTOs;
+﻿using Logly.Application.Auth.Services;
+using Logly.Application.DeliveryCompanies.DTOs;
 using Logly.Application.DeliveryCompanies.Exceptions;
 using Logly.Application.DeliveryCompanies.Repositories;
 using Logly.Application.DeliveryCompanies.Services;
@@ -12,10 +13,15 @@ public sealed class DeliveryCompanyService
     private readonly IDeliveryCompanyRepository
         _deliveryCompanyRepository;
 
+    private readonly ICurrentUserService
+        _currentUserService;
+
     public DeliveryCompanyService(
-        IDeliveryCompanyRepository deliveryCompanyRepository)
+        IDeliveryCompanyRepository deliveryCompanyRepository,
+        ICurrentUserService currentUserService)
     {
         _deliveryCompanyRepository = deliveryCompanyRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IReadOnlyList<DeliveryCompanyResponse>> GetAllAsync(
@@ -23,15 +29,12 @@ public sealed class DeliveryCompanyService
     {
         var companies =
             await _deliveryCompanyRepository.GetAllAsync(
+                _currentUserService.UserId,
+                _currentUserService.IsAdmin,
                 cancellationToken);
 
         return companies
-            .Select(company => new DeliveryCompanyResponse
-            {
-                Id = company.Id,
-                Name = company.Name,
-                IsSystemDefined = company.IsSystemDefined
-            })
+            .Select(MapResponse)
             .ToList();
     }
 
@@ -39,6 +42,9 @@ public sealed class DeliveryCompanyService
         CreateDeliveryCompanyRequest request,
         CancellationToken cancellationToken)
     {
+        var userId = _currentUserService.UserId;
+        var isAdmin = _currentUserService.IsAdmin;
+
         var name = request.Name?.Trim() ?? string.Empty;
 
         if (name.Length == 0)
@@ -55,8 +61,21 @@ public sealed class DeliveryCompanyService
                 nameof(request.Name));
         }
 
+        if (request.IsSystemDefined && !isAdmin)
+        {
+            throw new UnauthorizedAccessException(
+                "Közös futárcéget csak admin hozhat létre.");
+        }
+
+        var isSystemDefined = request.IsSystemDefined;
+
+        Guid? ownerId = isSystemDefined
+            ? null
+            : userId;
+
         if (await _deliveryCompanyRepository.ExistsByNameAsync(
                 name,
+                ownerId,
                 cancellationToken))
         {
             throw new DeliveryCompanyAlreadyExistsException();
@@ -66,7 +85,8 @@ public sealed class DeliveryCompanyService
         {
             Id = Guid.NewGuid(),
             Name = name,
-            IsSystemDefined = false,
+            IsSystemDefined = isSystemDefined,
+            OwnerId = ownerId,
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -74,11 +94,26 @@ public sealed class DeliveryCompanyService
             company,
             cancellationToken);
 
+        return MapResponse(company);
+    }
+
+    private DeliveryCompanyResponse MapResponse(
+        DeliveryCompany company)
+    {
+        var isAdmin = _currentUserService.IsAdmin;
+        
         return new DeliveryCompanyResponse
         {
             Id = company.Id,
             Name = company.Name,
-            IsSystemDefined = company.IsSystemDefined
+            IsSystemDefined = company.IsSystemDefined,
+            OwnerId = company.OwnerId,
+            OwnerDisplayName = isAdmin
+                ? company.Owner?.DisplayName
+                : null,
+            OwnerEmail = isAdmin
+                ? company.Owner?.Email
+                : null
         };
     }
 }

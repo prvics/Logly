@@ -18,10 +18,13 @@ export interface AuthResponse {
 }
 
 // A /api/auth/me endpoint
+export type UserRole = "Admin" | "User";
+
 export interface CurrentUserResponse {
   id: string;
   email: string;
   displayName: string | null;
+  role: UserRole;
   createdAtUtc: string;
 }
 
@@ -332,10 +335,14 @@ export interface DeliveryCompanyResponse {
   id: string;
   name: string;
   isSystemDefined: boolean;
+  ownerId: string | null;
+  ownerDisplayName: string | null;
+  ownerEmail: string | null;
 }
 
 export interface CreateDeliveryCompanyRequest {
   name: string;
+  isSystemDefined: boolean;
 }
 
 // ---------- User companies ----------

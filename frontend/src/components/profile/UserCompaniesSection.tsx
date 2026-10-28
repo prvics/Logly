@@ -29,6 +29,7 @@ import type {
 
 import { useTheme } from "../../theme/ThemeProvider";
 import type { ThemeColors } from "../../theme/themes";
+import { useAuthStore } from "../../store/authStore"
 
 import { ChoiceField } from "../ui/ChoiceField";
 import { DateField } from "../ui/DateField";
@@ -92,6 +93,9 @@ function sortUserCompanies(
 
 export function UserCompaniesSection() {
     const { colors } = useTheme();
+    const { user } = useAuthStore();
+
+    const isAdmin = user?.role === "Admin"
 
     const styles = useMemo(
         () => createStyles(colors),
@@ -112,6 +116,7 @@ export function UserCompaniesSection() {
     const [startedOn, setStartedOn] = useState(todayLocal);
     const [note, setNote] = useState("");
     const [newCompanyName, setNewCompanyName] = useState("");
+    const [isSystemDefined, setIsSystemDefined] = useState(false);
 
     const [editingId, setEditingId] =
         useState<string | null>(null);
@@ -335,8 +340,21 @@ export function UserCompaniesSection() {
 
             const normalizedName = name.toLocaleLowerCase("hu-HU");
 
+            const targetOwnerId =
+                isAdmin && isSystemDefined
+                    ? null
+                    : user?.id;
+
+            if (targetOwnerId === undefined) {
+                setActionError(
+                    "Nem található a bejelentkezett felhasználó. Jelentkezz be újra."
+                );
+                return;
+            }
+
             const existingCompany = companies.find(
                 (company) =>
+                    company.ownerId === targetOwnerId &&
                     company.name.trim().toLocaleLowerCase("hu-HU") ===
                     normalizedName
             );
@@ -365,7 +383,10 @@ export function UserCompaniesSection() {
                 return;
             }
 
-            const created = await createDeliveryCompany({ name });
+            const created = await createDeliveryCompany({
+                name,
+                isSystemDefined,
+            });
 
             if (!mountedRef.current) {
                 return;
@@ -384,6 +405,7 @@ export function UserCompaniesSection() {
 
             setCompanyId(created.id);
             setNewCompanyName("");
+            setIsSystemDefined(false);
 
             setSuccess(
                 "A futárcég létrejött. A fenti űrlapon már " +
@@ -781,10 +803,21 @@ export function UserCompaniesSection() {
                             <>
                                 <ChoiceField
                                     label="Futárcég"
-                                    options={availableCompanies.map((company) => ({
-                                        value: company.id,
-                                        label: company.name,
-                                    }))}
+                                    options={availableCompanies.map((company) => {
+                                        const ownerLabel =
+                                            company.ownerDisplayName?.trim() ||
+                                            company.ownerEmail ||
+                                            company.ownerId ||
+                                            "Ismeretlen tulajdonos";
+
+                                        return {
+                                            value: company.id,
+                                            label:
+                                                isAdmin && company.ownerId
+                                                    ? `${company.name} — Tulajdonos: ${ownerLabel}`
+                                                    : company.name,
+                                        };
+                                    })}
                                     value={companyId}
                                     onChange={(value) => {
                                         setCompanyId(value);
@@ -854,6 +887,29 @@ export function UserCompaniesSection() {
                             }}
                             editable={!disabled}
                         />
+                        {isAdmin ? (
+                            <View style={styles.switchRow}>
+                                <Text style={styles.switchLabel}>
+                                    Előre feltöltött cég
+                                </Text>
+
+
+                                <Switch
+                                    accessibilityLabel="Előre feltöltött futárcég létrehozása"
+                                    value={isSystemDefined}
+                                    disabled={disabled}
+                                    onValueChange={(value) => {
+                                        setIsSystemDefined(value);
+                                        clearFeedback();
+                                    }}
+                                    trackColor={{
+                                        false: colors.switchTrackOff,
+                                        true: colors.switchTrackOn,
+                                    }}
+                                    thumbColor={colors.switchThumb}
+                                />
+                            </View>
+                        ) : null}
 
                         <PrimaryButton
                             title="Új futárcég létrehozása"

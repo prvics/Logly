@@ -1,4 +1,5 @@
-﻿using Logly.Application.UserCompanies.DTOs;
+﻿using Logly.Application.Auth.Services;
+using Logly.Application.UserCompanies.DTOs;
 using Logly.Application.UserCompanies.Exceptions;
 using Logly.Application.UserCompanies.Repositories;
 using Logly.Application.UserCompanies.Services;
@@ -9,11 +10,14 @@ namespace Logly.Infrastructure.UserCompanies;
 public sealed class UserCompanyService : IUserCompanyService
 {
     private readonly IUserCompanyRepository _userCompanyRepository;
+    private readonly ICurrentUserService _currentUserService;
 
     public UserCompanyService(
-        IUserCompanyRepository userCompanyRepository)
+        IUserCompanyRepository userCompanyRepository,
+        ICurrentUserService currentUserService)
     {
         _userCompanyRepository = userCompanyRepository;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IReadOnlyList<UserCompanyResponse>> GetAllAsync(
@@ -78,6 +82,15 @@ public sealed class UserCompanyService : IUserCompanyService
         {
             throw new ArgumentException(
                 "A kiválasztott futárcég nem található.",
+                nameof(request.DeliveryCompanyId));
+        }
+
+        if (!_currentUserService.IsAdmin &&
+            deliveryCompany.OwnerId.HasValue &&
+            deliveryCompany.OwnerId.Value != userId)
+        {
+            throw new ArgumentException(
+                "A kiválasztott futárcég nem rendelhető a profilodhoz.",
                 nameof(request.DeliveryCompanyId));
         }
 

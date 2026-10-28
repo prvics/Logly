@@ -1,23 +1,28 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-import { ThemeSwitch } from "../components/ui/ThemeSwitch";
-import { useTheme } from "../theme/ThemeProvider";
 import { UserCompaniesSection } from "../components/profile/UserCompaniesSection";
+import { UserVehiclesSection } from "../components/profile/UserVehiclesSection";
+import { ThemeSwitch } from "../components/ui/ThemeSwitch";
 import { useAuthStore } from "../store/authStore";
+import { useTheme } from "../theme/ThemeProvider";
 
 export function ProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
-  const { colors, mode, toggleMode } = useTheme();
+  const { colors, mode, setTheme } = useTheme();
 
   return (
     <ScrollView
       style={[
         styles.screen,
-        {
-          backgroundColor: colors.background,
-        },
+        { backgroundColor: colors.background },
       ]}
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
@@ -70,6 +75,8 @@ export function ProfileScreen() {
 
         <UserCompaniesSection />
 
+        <UserVehiclesSection />
+
         <View
           style={[
             styles.appearanceCard,
@@ -105,13 +112,15 @@ export function ProfileScreen() {
                   { color: colors.textSecondary },
                 ]}
               >
-                Sötétebb színek és kisebb szemterhelés.
+                Váltás a világos és sötét megjelenés között.
               </Text>
             </View>
 
             <ThemeSwitch
               value={mode === "dark"}
-              onValueChange={toggleMode}
+              onValueChange={(enabled) =>
+                setTheme(enabled ? "dark" : "light")
+              }
               accessibilityLabel="Sötét mód bekapcsolása vagy kikapcsolása"
             />
           </View>
@@ -122,9 +131,7 @@ export function ProfileScreen() {
           onPress={() => void logout()}
           style={({ pressed }) => [
             styles.logoutButton,
-            {
-              borderColor: colors.danger,
-            },
+            { borderColor: colors.danger },
             pressed ? styles.pressed : null,
           ]}
         >

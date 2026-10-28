@@ -17,10 +17,23 @@ public sealed class DeliveryCompanyRepository
     }
 
     public async Task<IReadOnlyList<DeliveryCompany>> GetAllAsync(
+        Guid currentUserId,
+        bool isAdmin,
         CancellationToken cancellationToken)
     {
-        return await _dbContext.DeliveryCompanies
+        var query = _dbContext.DeliveryCompanies
             .AsNoTracking()
+            .Include(company => company.Owner)
+            .AsQueryable();
+
+        if (!isAdmin)
+        {
+            query = query.Where(company =>
+                company.OwnerId == null ||
+                company.OwnerId == currentUserId);
+        }
+
+        return await query
             .OrderBy(company => company.Name)
             .ThenBy(company => company.Id)
             .ToListAsync(cancellationToken);
@@ -28,6 +41,7 @@ public sealed class DeliveryCompanyRepository
 
     public async Task<bool> ExistsByNameAsync(
         string name,
+        Guid? ownerId,
         CancellationToken cancellationToken)
     {
         var normalizedName = name.Trim().ToUpperInvariant();
@@ -35,7 +49,9 @@ public sealed class DeliveryCompanyRepository
         return await _dbContext.DeliveryCompanies
             .AsNoTracking()
             .AnyAsync(
-                company => company.Name.ToUpper() == normalizedName,
+                company =>
+                    company.OwnerId == ownerId &&
+                    company.Name.ToUpper() == normalizedName,
                 cancellationToken);
     }
 
@@ -56,6 +72,7 @@ public sealed class DeliveryCompanyRepository
 
             if (await ExistsByNameAsync(
                     deliveryCompany.Name,
+                    deliveryCompany.OwnerId,
                     cancellationToken))
             {
                 throw new DeliveryCompanyAlreadyExistsException();

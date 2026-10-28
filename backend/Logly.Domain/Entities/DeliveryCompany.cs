@@ -8,5 +8,10 @@ public class DeliveryCompany : BaseEntity
 
     public bool IsSystemDefined { get; set; }
 
-    public ICollection<UserCompany> UserCompanies { get; set; } = new List<UserCompany>();
+    public Guid? OwnerId { get; set; }
+
+    public AppUser? Owner { get; set; }
+
+    public ICollection<UserCompany> UserCompanies { get; set; } =
+        new List<UserCompany>();
 }

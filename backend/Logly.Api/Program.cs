@@ -1,9 +1,13 @@
-﻿using System.Text;
+﻿using System.Security.Claims;
+using System.Text;
 using FluentValidation;
+using Logly.Api.Services;
+using Logly.Application.Auth.Services;
 using Logly.Application.Auth.Validators;
 using Logly.Infrastructure;
 using Logly.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -45,6 +49,8 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -58,11 +64,18 @@ builder.Services
             ValidAudience = jwtAudience,
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = "role"
         };
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<LoglyDbContext>("database");

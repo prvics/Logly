@@ -8,6 +8,8 @@ public sealed class AuthResponse
 
     public string? DisplayName { get; init; }
 
+    public string Role { get; init; } = "User";
+
     public string AccessToken { get; init; } = string.Empty;
 
     public DateTime ExpiresAtUtc { get; init; }

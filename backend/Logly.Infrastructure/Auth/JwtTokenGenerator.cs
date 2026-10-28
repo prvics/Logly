@@ -36,14 +36,16 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             "Jwt:ExpiresInMinutes",
             60);
 
-        var expiresAtUtc = DateTime.UtcNow.AddMinutes(expiresInMinutes);
+        var nowUtc = DateTime.UtcNow;
+        var expiresAtUtc = nowUtc.AddMinutes(expiresInMinutes);
 
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new("role", user.IsAdmin ? "Admin" : "User")
         };
 
         if (!string.IsNullOrWhiteSpace(user.DisplayName))
@@ -63,7 +65,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             issuer: issuer,
             audience: audience,
             claims: claims,
-            notBefore: DateTime.UtcNow,
+            notBefore: nowUtc,
             expires: expiresAtUtc,
             signingCredentials: credentials);
 
@@ -72,6 +74,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             UserId = user.Id,
             Email = user.Email,
             DisplayName = user.DisplayName,
+            Role = user.IsAdmin ? "Admin" : "User",
             AccessToken = new JwtSecurityTokenHandler()
                 .WriteToken(token),
             ExpiresAtUtc = expiresAtUtc

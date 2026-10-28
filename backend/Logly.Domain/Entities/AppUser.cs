@@ -12,13 +12,20 @@ public class AppUser : BaseEntity
 
     public bool IsActive { get; set; } = true;
 
-    public ICollection<UserCompany> UserCompanies { get; set; } = new List<UserCompany>();
+    public bool IsAdmin { get; set; } = false;
 
-    public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
+    public ICollection<UserCompany> UserCompanies { get; set; } =
+        new List<UserCompany>();
 
-    public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+    public ICollection<Vehicle> Vehicles { get; set; } =
+        new List<Vehicle>();
 
-    public ICollection<FuelFillUp> FuelFillUps { get; set; } = new List<FuelFillUp>();
-    
-    public ICollection<Income> Incomes { get; set; } = new List<Income>();
+    public ICollection<Expense> Expenses { get; set; } =
+        new List<Expense>();
+
+    public ICollection<FuelFillUp> FuelFillUps { get; set; } =
+        new List<FuelFillUp>();
+
+    public ICollection<Income> Incomes { get; set; } =
+        new List<Income>();
 }

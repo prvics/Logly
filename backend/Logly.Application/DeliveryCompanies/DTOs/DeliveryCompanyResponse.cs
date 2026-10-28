@@ -2,9 +2,15 @@
 
 public sealed class DeliveryCompanyResponse
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
-    public bool IsSystemDefined { get; set; }
+    public bool IsSystemDefined { get; init; }
+
+    public Guid? OwnerId { get; init; }
+    
+    public string? OwnerDisplayName { get; init; }
+
+    public string? OwnerEmail { get; init; }
 }

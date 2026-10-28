@@ -45,6 +45,9 @@ namespace Logly.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -80,13 +83,23 @@ namespace Logly.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid?>("OwnerId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_DeliveryCompanies_Shared_Name")
+                        .HasFilter("\"OwnerId\" IS NULL");
+
+                    b.HasIndex("OwnerId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_DeliveryCompanies_Owner_Name")
+                        .HasFilter("\"OwnerId\" IS NOT NULL");
 
                     b.ToTable("DeliveryCompanies", (string)null);
                 });
@@ -410,6 +423,16 @@ namespace Logly.Infrastructure.Migrations
                     b.HasIndex("UserId", "Name");
 
                     b.ToTable("Vehicles", (string)null);
+                });
+
+            modelBuilder.Entity("Logly.Domain.Entities.DeliveryCompany", b =>
+                {
+                    b.HasOne("Logly.Domain.Entities.AppUser", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.ClientNoAction);
+
+                    b.Navigation("Owner");
                 });
 
             modelBuilder.Entity("Logly.Domain.Entities.Expense", b =>

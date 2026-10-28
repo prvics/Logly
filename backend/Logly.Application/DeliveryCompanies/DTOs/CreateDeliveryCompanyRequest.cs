@@ -9,4 +9,6 @@ public sealed class CreateDeliveryCompanyRequest
         100,
         ErrorMessage = "A futárcég neve legfeljebb 100 karakter lehet.")]
     public string Name { get; set; } = string.Empty;
+
+    public bool IsSystemDefined { get; set; }
 }

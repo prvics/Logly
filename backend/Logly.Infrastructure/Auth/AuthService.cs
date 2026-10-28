@@ -106,6 +106,7 @@ public sealed class AuthService : IAuthService
             Id = user.Id,
             Email = user.Email,
             DisplayName = user.DisplayName,
+            Role = user.IsAdmin ? "Admin" : "User",
             CreatedAtUtc = user.CreatedAtUtc
         };
     }
